@@ -1,0 +1,9 @@
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.AssemblyReference.cache
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.CoreCompileInputs.cache
+E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Pagos.dll
+E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Pagos.pdb
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.dll
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.pdb
+E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Newtonsoft.Json.dll
+E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Newtonsoft.Json.xml
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.CopyComplete

@@ -1,0 +1,16 @@
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.csproj.AssemblyReference.cache
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.csproj.SuggestedBindingRedirects.cache
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.Form1.resources
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.Properties.Resources.resources
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.csproj.GenerateResource.cache
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.csproj.CoreCompileInputs.cache
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Test.exe.config
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Test.exe
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Test.pdb
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Pagos.dll
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Pagos.pdb
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.csproj.CopyComplete
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.exe
+E:\Eze\Fuentes\Pagos\Test\obj\Debug\Test.pdb
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Newtonsoft.Json.dll
+E:\Eze\Fuentes\Pagos\Test\bin\Debug\Newtonsoft.Json.xml

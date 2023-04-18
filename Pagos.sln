@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pagos", "Pagos\Pagos.csproj", "{DAAA3BA3-2E18-4450-B136-0E6313B20E40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{3DECBA12-7493-45AE-97EB-9ABA1113826A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DAAA3BA3-2E18-4450-B136-0E6313B20E40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAAA3BA3-2E18-4450-B136-0E6313B20E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAAA3BA3-2E18-4450-B136-0E6313B20E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAAA3BA3-2E18-4450-B136-0E6313B20E40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DECBA12-7493-45AE-97EB-9ABA1113826A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DECBA12-7493-45AE-97EB-9ABA1113826A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DECBA12-7493-45AE-97EB-9ABA1113826A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DECBA12-7493-45AE-97EB-9ABA1113826A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D39DCDF8-A736-4177-92C4-C683F358046A}
+	EndGlobalSection
+EndGlobal
