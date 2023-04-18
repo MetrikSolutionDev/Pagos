@@ -24,13 +24,12 @@ namespace Pagos.Pasarela
         {
             RequestPago sRequest = new RequestPago();
 
-
             //HAGO LA CONSULTA A LA API
             HttpContent sHttpContent = new StringContent(JsonConvert.SerializeObject(xModel), Encoding.UTF8);
 
             var sReturn = _client.PostAsync(_configuracion.Sub_end_point, sHttpContent).Result;
 
-            return new RespuestaConsultaEstadoPago() { Confirmado = false, Lote = "12345" };
+            return new RespuestaConsultaEstadoPago() { Confirmado = false, Lote = "123456789" };
         }
 
         public bool EnviarConsultaEstadoPago(ConsultaEstadoPago xModel)
