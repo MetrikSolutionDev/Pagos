@@ -12,11 +12,13 @@ namespace Pagos.Pasarela
 
         public string Sub_end_point { get; set; }
 
+        public string Sub_end_point_authorization { get; set; }
+
         public string Key { get; set; }
 
         public List<string> Id_equipos { get; set; }
 
-        public Common.CommonPago.Tipo Tipo { get; set; }
+        public CommonPago.Tipo Tipo { get; set; }
 
         public int Cantidad_persistencias_pago { get; set; }
     }

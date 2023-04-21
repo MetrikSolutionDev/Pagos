@@ -10,7 +10,7 @@ namespace Pagos.Pasarela
     public interface IPago
     {
         event RespuestaPagoHandler OnRespuestaPago;
-        event SolicitudPagoHandler OnSolicitudPago;
+        event RespuestaHandler OnRespuesta;
 
         void RenovarToken();
 

@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Pagos.Pasarela
+namespace Pagos.Pasarela.PrismaModel
 {
     internal class Payment_data
     {

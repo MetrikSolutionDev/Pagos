@@ -6,19 +6,35 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.Eventos
 {
-    public class SolicitudPagoEventArgs : EventArgs
+    public class RespuestaEventArgs : EventArgs
     {
-        private bool _confirmado;
-
-        public bool Confirmado
+        public enum Tipo
         {
-            get { return _confirmado; }
-            set { _confirmado = value; }
+            TOKEN,
+            SOLICITUD_PAGO,
+            CONSULTA_PAGO
         }
 
-        public SolicitudPagoEventArgs(bool xConfirmado)
+        private Tipo _tipo;
+
+        private object _respuesta;
+
+        public Tipo TipoRespuesta
         {
-            _confirmado = xConfirmado;
+            get { return _tipo; }
+            set { _tipo = value; }
+        }
+
+        public object Respuesta
+        {
+            get { return _respuesta; }
+            set { _respuesta = value; }
+        }
+
+        public RespuestaEventArgs(Tipo xTipo, object xRespuesta)
+        {
+            _tipo = xTipo;
+            _respuesta = xRespuesta;
         }
     }
 }

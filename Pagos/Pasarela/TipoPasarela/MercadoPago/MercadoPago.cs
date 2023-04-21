@@ -15,7 +15,7 @@ namespace Pagos.Pasarela
         }
 
         public event RespuestaPagoHandler OnRespuestaPago;
-        public event SolicitudPagoHandler OnSolicitudPago;
+        public event RespuestaHandler OnRespuesta;
 
         public RespuestaConsultaEstadoPago ConsultaEstadoPagoPersistente(ConsultaEstadoPago xModel)
         {

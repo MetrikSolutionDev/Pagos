@@ -4,12 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pagos.Pasarela
+namespace Pagos.Pasarela.PrismaModel
 {
     internal class Payment_request_data
     {
+        /// <summary>
+        /// 1-Sandbox,2-Produccion,9-Homologacion
+        /// </summary>
         public string subnet_acquirer_id { get; set; }
 
+        /// <summary>
+        /// Los 2 ultimos digitos son decimales
+        /// </summary>
         public string payment_amount { get; set; }
 
         public string terminal_menu_text { get; set; }

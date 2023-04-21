@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pagos.Pasarela
+namespace Pagos.Pasarela.PrismaModel
 {
     internal class RequestPago
     {
-        public string cuit_cuil { get; set; }
-
         public Payment_request_data payment_request_data { get; set; }
 
         public Payment_data payment_data { get; set; }
+
+        public List<Errors> errors { get; set; }
     }
 }

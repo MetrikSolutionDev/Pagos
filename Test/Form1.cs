@@ -55,20 +55,23 @@ namespace Test
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Configuracion sConfiguracion = new Configuracion() { Cantidad_persistencias_pago = 10, Tipo = Pagos.Common.CommonPago.Tipo.PRISMA };
+            Configuracion sConfiguracion = new Configuracion() { Cantidad_persistencias_pago = 10, Tipo = Pagos.CommonPago.Tipo.PRISMA };
             sConfiguracion.Id_equipos = new List<string>();
             sConfiguracion.Id_equipos.Add("asd123");
             sConfiguracion.End_point = "https://api-sandbox.prismamediosdepago.com";
             sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_payments";
-            sConfiguracion.Key = "2JOhy0lORJdK5LQihzMnJuVrCwloGYZ7";
-
+            sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            sConfiguracion.Key = "MkpPaHkwbE9SSmRLNUxRaWh6TW5KdVZyQ3dsb0dZWjc6Rnh3NEdRTmx6b3lCUlgzUQ==";
+                                  
             IPago sPago = PagoFactory.Instance(sConfiguracion);
 
             sPago.OnRespuestaPago += Respuesta;
 
+            sPago.RenovarToken();
+
             //sPago.EnviarSolicitudPago(new Pagos.Pasarela.Model.SolicitudPago() { Banco = "banco test", Importe = 1000 });
 
-            sPago.EnviarConsultaEstadoPago(new Pagos.Pasarela.ConsultaEstadoPago() { Pago_id = "asdhfdakfdasjfda" });
+            //sPago.EnviarConsultaEstadoPago(new Pagos.Pasarela.ConsultaEstadoPago() { Pago_id = "asdhfdakfdasjfda" });
         }
     }
 }

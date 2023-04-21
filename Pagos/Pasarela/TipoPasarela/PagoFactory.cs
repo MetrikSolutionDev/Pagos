@@ -14,11 +14,11 @@ namespace Pagos.Pasarela
 
             switch (xConfiguracion.Tipo)
             {
-                case Common.CommonPago.Tipo.PRISMA:
+                case CommonPago.Tipo.PRISMA:
 
                     return new Prisma(xConfiguracion);
 
-                case Common.CommonPago.Tipo.MERCADO_PAGO:
+                case CommonPago.Tipo.MERCADO_PAGO:
 
                     return new MercadoPago(xConfiguracion);
             }
