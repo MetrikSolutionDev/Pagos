@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pagos.Pasarela.Eventos;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,11 +13,13 @@ namespace Pagos.Pasarela
         event RespuestaPagoHandler OnRespuestaPago;
         event RespuestaHandler OnRespuesta;
 
+        void Respuesta(object sender, RespuestaEventArgs e);
+
         void RenovarToken();
 
         void EnviarSolicitudPago(SolicitudPago xModel);
 
-        bool EnviarConsultaEstadoPago(ConsultaEstadoPago xModel);
+        //bool EnviarConsultaEstadoPago(ConsultaEstadoPago xModel);
 
         RespuestaConsultaEstadoPago ConsultaEstadoPagoPersistente(ConsultaEstadoPago xModel);
     }

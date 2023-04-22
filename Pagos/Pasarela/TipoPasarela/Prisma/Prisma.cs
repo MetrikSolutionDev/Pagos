@@ -20,12 +20,14 @@ using System.Xml.Linq;
 namespace Pagos.Pasarela
 {
     public class Prisma : PagoBase, IPago
-    {   public Prisma(Configuracion xConfiguracion)
+    {   
+        public Prisma(Configuracion xConfiguracion)
         {
             _configuracion = xConfiguracion;
             SetClient();
 
             OnRespuestaInt += Respuesta;
+            //OnRespuestaGenericInt += Respuesta;
         }
 
         public event RespuestaPagoHandler OnRespuestaPago;
@@ -33,23 +35,219 @@ namespace Pagos.Pasarela
 
         public void Respuesta(object sender, RespuestaEventArgs e)
         {
-            switch (e.TipoRespuesta) 
+            switch (e.TipoRespuesta)
             {
-                case RespuestaEventArgs.Tipo.TOKEN:
+                case Enums.TipoRespuestaEvento.TOKEN:
 
                     TokenResponse sRespuestaToken = (TokenResponse)e.Respuesta;
                     Token = sRespuestaToken.access_token != null ? sRespuestaToken.access_token : "";
+
+                    switch (e.TipoRespuestaOrigen) 
+                    {
+                        case Enums.TipoRespuestaEvento.SOLICITUD_PAGO:
+                            EnviarSolicitudPago((SolicitudPago)e.ParametroOriginal);
+                            break;
+
+                        case Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO:
+                            EnviarConsultaEstadoPago((RequestPago)e.ParametroOriginal);
+                            break;
+                    }
+
+                    //if (e.Delegate != null)
+                    //    e.Delegate.Invoke(e.ParametroOriginal);
+
                     break;
 
-                case RespuestaEventArgs.Tipo.SOLICITUD_PAGO:
+                case Enums.TipoRespuestaEvento.SOLICITUD_PAGO:
 
                     RequestPago sRespuestaSolicitudPago = (RequestPago)e.Respuesta;
 
-                    if (sRespuestaSolicitudPago.errors != null && sRespuestaSolicitudPago.errors.Any(er => er.code == "401")) 
+                    if (sRespuestaSolicitudPago.errors != null)
                     {
-                        RenovarToken();
+                        if (sRespuestaSolicitudPago.errors.Any(er => er.status == "401"))
+                        {
+                            RequestPago sParametroOriginal = (RequestPago)e.ParametroOriginal;
+                            //EnviarSolicitudPago(sParametroOriginal.Parametro_original);
 
-                        //EnviarSolicitudPagoService<RequestPago, RequestPago>("/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPago);
+                            sParametroOriginal.Parametro_original.Nro_intento_generacion_token++;
+
+                            if (sParametroOriginal.Parametro_original.Nro_intento_generacion_token < 3)
+                            {
+                                RenovarToken(sParametroOriginal.Parametro_original, Enums.TipoRespuestaEvento.SOLICITUD_PAGO);
+                            }
+                            else
+                            {
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Error de validacion de Token"));
+                                sParametroOriginal.Parametro_original.Nro_intento_generacion_token = 0;
+                                SolicitudPagoEnProceso = false;
+                            }
+                        }
+
+                        if (sRespuestaSolicitudPago.errors.Any(er => er.status == "400"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Error de formato"));
+                        }
+
+                        if (sRespuestaSolicitudPago.errors.Any(er => er.status == "404"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Error: Pago no encontrado"));
+                        }
+
+                        if (sRespuestaSolicitudPago.errors.Any(er => er.status == "409"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Error en retorno de formato de mensaje"));
+                        }
+
+                        if (sRespuestaSolicitudPago.errors.Any(er => er.status == "500"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Error interno"));
+                        }
+
+                        if (sRespuestaSolicitudPago.errors.Any(er => er.status == "503"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Error: Servicio no disponible"));
+                        }
+                    }
+                    else 
+                    {
+                        OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Solicitud enviada con exito"));
+
+                        SolicitudPagoEnProceso = false;
+
+                        sRespuestaSolicitudPago.Nro_persistencia = 1;
+                        sRespuestaSolicitudPago.Inicio_persistencia = DateTime.UtcNow.AddHours(-3);
+
+                        EnviarConsultaEstadoPago(sRespuestaSolicitudPago);
+                    }
+
+                    break;
+
+                case Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO:
+                    RequestPago sRespuestaConsultaEstadoPago = (RequestPago)e.Respuesta;
+
+                    if (sRespuestaConsultaEstadoPago.errors != null)
+                    {
+                        if (sRespuestaConsultaEstadoPago.errors.Any(er => er.status == "401"))
+                        {
+                            RequestPago sParametroOriginal = (RequestPago)e.ParametroOriginal;
+
+                            sParametroOriginal.Parametro_original.Nro_intento_generacion_token++;
+
+                            if (sParametroOriginal.Parametro_original.Nro_intento_generacion_token < 3)
+                            {
+                                RenovarToken(sParametroOriginal, Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO);
+                            }
+                            else
+                            {
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error de validacion de Token"));
+                                sParametroOriginal.Parametro_original.Nro_intento_generacion_token = 0;
+                                SolicitudPagoEnProceso = false;
+                            }
+                        }
+
+                        if (sRespuestaConsultaEstadoPago.errors.Any(er => er.status == "400"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error de formato"));
+                        }
+
+                        if (sRespuestaConsultaEstadoPago.errors.Any(er => er.status == "404"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error: Pago no encontrado"));
+                        }
+
+                        if (sRespuestaConsultaEstadoPago.errors.Any(er => er.status == "409"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error en retorno de formato de mensaje"));
+                        }
+
+                        if (sRespuestaConsultaEstadoPago.errors.Any(er => er.status == "500"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error interno"));
+                        }
+
+                        if (sRespuestaConsultaEstadoPago.errors.Any(er => er.status == "503"))
+                        {
+                            OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error: Servicio no disponible"));
+                        }
+                    }
+                    else
+                    {
+                        //OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Solicitud enviada con exito"));
+
+                        Payment_data sPaymentDataReturn = sRespuestaConsultaEstadoPago.payment_data;
+
+                        switch (sPaymentDataReturn.payment_status) 
+                        {
+                            case Enums.PaymentStatus.PAYMENT_REQUEST:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Solicitud recibida con exito"));
+
+                                sRespuestaConsultaEstadoPago.Nro_persistencia++;
+
+                                EnviarConsultaEstadoPago(sRespuestaConsultaEstadoPago);
+                                break;
+
+                            case Enums.PaymentStatus.PROCESSING_PAYMENT:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Procesando pago"));
+
+                                sRespuestaConsultaEstadoPago.Nro_persistencia++;
+
+                                EnviarConsultaEstadoPago(sRespuestaConsultaEstadoPago);
+                                break;
+
+                            case Enums.PaymentStatus.WAITING_CONFIRMATION:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Esperando confirmacion"));
+
+                                sRespuestaConsultaEstadoPago.Nro_persistencia++;
+
+                                EnviarConsultaEstadoPago(sRespuestaConsultaEstadoPago);
+                                break;
+
+                            case Enums.PaymentStatus.CONFIRM_REQUEST:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Solicitud de confirmacion"));
+
+                                sRespuestaConsultaEstadoPago.Nro_persistencia++;
+
+                                EnviarConsultaEstadoPago(sRespuestaConsultaEstadoPago);
+                                break;
+
+                            case Enums.PaymentStatus.UNDO_REQUEST:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Deshacer solicitud"));
+
+                                break;
+
+                            case Enums.PaymentStatus.PROCESSING_CONFIRMATION:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Procesando confirmacion"));
+
+                                sRespuestaConsultaEstadoPago.Nro_persistencia++;
+
+                                EnviarConsultaEstadoPago(sRespuestaConsultaEstadoPago);
+                                break;
+
+                            case Enums.PaymentStatus.PROCESSING_UNDO:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Deshacer procesamiento"));
+
+                                break;
+
+                            case Enums.PaymentStatus.CONFIRMED:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Pago confirmado"));
+
+                                break;
+
+                            case Enums.PaymentStatus.DECLINED:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Pago rechazado"));
+
+                                break;
+
+                            case Enums.PaymentStatus.UNDONE:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Pago deshecho"));
+
+                                break;
+
+                            case Enums.PaymentStatus.ERROR:
+                                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error durante el procesamiento del pago"));
+
+                                break;
+                        }
                     }
 
                     break;
@@ -71,15 +269,41 @@ namespace Pagos.Pasarela
             return new RespuestaConsultaEstadoPago() { Confirmado = false, Lote = "123456789" };
         }
 
-        public bool EnviarConsultaEstadoPago(ConsultaEstadoPago xModel)
+        private void EnviarConsultaEstadoPago(RequestPago xModel)
         {
-            PersistirConsultaPago(ConsultaEstadoPagoPersistente, xModel, ref OnRespuestaPago);
+            //PersistirConsultaPago(ConsultaEstadoPagoPersistente, xModel, ref OnRespuestaPago);
 
-            return true;
+            //return true;
+
+            int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias_pago == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias_pago;
+
+            if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
+            {
+                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Error: Tiempo de persistencia agotado"));
+
+                return;
+            }
+
+            Payment_data sPaymentData = xModel.payment_data;
+
+            ConsultaEstadoPago sConsultaEstadoPago = new ConsultaEstadoPago();
+            sConsultaEstadoPago.Pago_id = sPaymentData.payment_id;
+            sConsultaEstadoPago.Referencia = xModel.payment_request_data.subnet_acquirer_id;
+            sConsultaEstadoPago.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
+
+            EnviarConsultaEstadoPagoService<RequestPago, RequestPago>("/payments/" + sConsultaEstadoPago.Pago_id, "subnet_acquirer_id=" + sConsultaEstadoPago.Referencia + "&cuit_cuil=" + sConsultaEstadoPago.Cuit_cuil, xModel);
         }
 
         public void EnviarSolicitudPago(SolicitudPago xModel)
         {
+            if (SolicitudPagoEnProceso)
+            {
+                OnRespuesta(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.SOLICITUD_PAGO, "Ya hay una solicitud en proceso"));
+                return;
+            }
+
+            SolicitudPagoEnProceso = true;
+
             RequestPago sRequestPago = new RequestPago();
             sRequestPago.payment_request_data = new Payment_request_data();
             sRequestPago.payment_request_data.subnet_acquirer_id = "1";
@@ -131,6 +355,9 @@ namespace Pagos.Pasarela
 
             sRequestPago.payment_request_data.terminals_list = new List<Terminal>();
 
+            if (xModel.Lista_terminales == null)
+                xModel.Lista_terminales = new List<string>();
+
             foreach (string sTerminalItem in xModel.Lista_terminales)
             {
                 Terminal sTerminal = new Terminal();
@@ -155,6 +382,7 @@ namespace Pagos.Pasarela
             sRequestPago.payment_request_data.qr_benefit_code = xModel.Admite_tarjeta_beneficio;
             sRequestPago.payment_request_data.trx_receipt_notes = xModel.Nota_impresion_ticket;
             sRequestPago.payment_request_data.card_holder_id = xModel.Dni_cliente.ContainValueString() ? xModel.Dni_cliente : null;
+            sRequestPago.Parametro_original = xModel;
 
             EnviarSolicitudPagoService<RequestPago, RequestPago>("/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPago);
 
@@ -167,6 +395,12 @@ namespace Pagos.Pasarela
         {
             //API METODO PARA RENOVAR TOKEN
             GenerarToken<TokenResponse>("", _configuracion.Sub_end_point_authorization, "grant_type=client_credentials");
+        }
+
+        public void RenovarToken(object xParametroOriginal, Enums.TipoRespuestaEvento xTipoOrigen)
+        {
+            //API METODO PARA RENOVAR TOKEN
+            GenerarToken<TokenResponse>("", _configuracion.Sub_end_point_authorization, "grant_type=client_credentials", xParametroOriginal, xTipoOrigen);
         }
 
         //public async Task GenerarToken()

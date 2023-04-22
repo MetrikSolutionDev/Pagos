@@ -6,8 +6,16 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.PrismaModel
 {
-    internal class Enums
+    public static class Enums
     {
+        public enum TipoRespuestaEvento
+        {
+            NINGUNO,
+            TOKEN,
+            SOLICITUD_PAGO,
+            CONSULTA_ESTADO_PAGO
+        }
+
         public enum PrintMethod 
         {
             MOBITEF_NON_FISCAL,

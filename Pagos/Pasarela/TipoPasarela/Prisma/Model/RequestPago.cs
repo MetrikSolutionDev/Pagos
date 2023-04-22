@@ -13,5 +13,11 @@ namespace Pagos.Pasarela.PrismaModel
         public Payment_data payment_data { get; set; }
 
         public List<Errors> errors { get; set; }
+
+        public SolicitudPago Parametro_original { get; set; }
+
+        public int Nro_persistencia { get; set; }
+
+        public DateTime Inicio_persistencia { get; set; }
     }
 }

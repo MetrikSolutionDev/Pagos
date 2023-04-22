@@ -47,7 +47,8 @@
   <ItemGroup>
     <Compile Include="Common\Common.cs" />
     <Compile Include="Pasarela\Eventos\RespuestaPagoEventArgs.cs" />
-    <Compile Include="Pasarela\Eventos\SolicitudPagoEventArgs.cs" />
+    <Compile Include="Pasarela\Eventos\RespuestaGenericEventArgs.cs" />
+    <Compile Include="Pasarela\Eventos\RespuestaEventArgs.cs" />
     <Compile Include="Pasarela\Model\Configuracion.cs" />
     <Compile Include="Pasarela\Model\ConsultaEstadoPago.cs" />
     <Compile Include="Pasarela\Model\RespuestaConsultaEstadoPago.cs" />

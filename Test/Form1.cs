@@ -61,13 +61,25 @@ namespace Test
             sConfiguracion.End_point = "https://api-sandbox.prismamediosdepago.com";
             sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_payments";
             sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
-            sConfiguracion.Key = "MkpPaHkwbE9SSmRLNUxRaWh6TW5KdVZyQ3dsb0dZWjc6Rnh3NEdRTmx6b3lCUlgzUQ==";
-                                  
+            //sConfiguracion.Key = "MkpPaHkwbE9SSmRLNUxRaWh6TW5KdVZyQ3dsb0dZWjc6Rnh3NEdRTmx6b3lCUlgzUQ==";
+            sConfiguracion.Key = "";
+
             IPago sPago = PagoFactory.Instance(sConfiguracion);
 
             sPago.OnRespuestaPago += Respuesta;
 
-            sPago.RenovarToken();
+            sPago.EnviarSolicitudPago(
+                new SolicitudPago()
+                {
+                    Cuit_cuil = "20341465681",
+                    Importe = 100,
+                    Nombre_integrador = "MS3",
+                    Nombre_sistema_integrador = "MS3 POS",
+                    Version_sistema_integrador = "1.0.0",
+                    Texto_terminal = ""
+                });
+
+            //sPago.RenovarToken();
 
             //sPago.EnviarSolicitudPago(new Pagos.Pasarela.Model.SolicitudPago() { Banco = "banco test", Importe = 1000 });
 

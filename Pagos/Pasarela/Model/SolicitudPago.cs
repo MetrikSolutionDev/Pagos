@@ -91,5 +91,7 @@ namespace Pagos.Pasarela
         /// Campo opcional para insertar el DNI del cliente
         /// </summary>
         public string Dni_cliente { get; set; }
+
+        public int Nro_intento_generacion_token { get; set; }
     }
 }

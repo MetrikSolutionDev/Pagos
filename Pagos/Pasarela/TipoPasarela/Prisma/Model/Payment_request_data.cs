@@ -53,6 +53,6 @@ namespace Pagos.Pasarela.PrismaModel
 
         public string trx_receipt_notes { get; set; }
 
-        public string card_holder_id { get; set; }
+        public string card_holder_id { get; set; }       
     }
 }

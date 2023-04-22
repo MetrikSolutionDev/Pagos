@@ -9,5 +9,9 @@ namespace Pagos.Pasarela
     public class ConsultaEstadoPago
     {
         public string Pago_id { get; set; }
+
+        public string Cuit_cuil { get; set; }
+
+        public string Referencia { get; set; }
     }
 }

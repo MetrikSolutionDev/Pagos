@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pagos.Pasarela.Eventos;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,10 +13,16 @@ namespace Pagos.Pasarela
         {
             _configuracion = xConfiguracion;
             SetClient();
+
+            OnRespuestaInt += Respuesta;
         }
 
         public event RespuestaPagoHandler OnRespuestaPago;
         public event RespuestaHandler OnRespuesta;
+
+        public void Respuesta(object sender, RespuestaEventArgs e)
+        {
+        }
 
         public RespuestaConsultaEstadoPago ConsultaEstadoPagoPersistente(ConsultaEstadoPago xModel)
         {

@@ -21,5 +21,10 @@ namespace Pagos.Pasarela
         public CommonPago.Tipo Tipo { get; set; }
 
         public int Cantidad_persistencias_pago { get; set; }
+
+        /// <summary>
+        /// Si no se configura y esta en 0, por defecto va a tener 60 segundos
+        /// </summary>
+        public int Tiempo_segundos_persistencias_pago { get; set; }
     }
 }
