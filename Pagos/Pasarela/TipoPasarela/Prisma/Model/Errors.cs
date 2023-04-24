@@ -13,5 +13,7 @@ namespace Pagos.Pasarela.PrismaModel
         public string code { get; set; }
 
         public string title { get; set; }
+
+        public string acquirer_message { get; set; }
     }
 }

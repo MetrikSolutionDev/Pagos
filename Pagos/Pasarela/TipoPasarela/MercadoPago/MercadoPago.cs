@@ -1,4 +1,5 @@
 ﻿using Pagos.Pasarela.Eventos;
+using Pagos.Pasarela.PrismaModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,32 +8,20 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela
 {
-    public class MercadoPago : PagoBase, IPago
+    public class MercadoPago : PagoBase, IPago, IPagoHandler, IAutenticacion
     {
         public MercadoPago(Configuracion xConfiguracion)
         {
             _configuracion = xConfiguracion;
             SetClient();
 
-            OnRespuestaInt += Respuesta;
+            OnRespuestaBase += RespuestaBase;
         }
 
-        public event RespuestaPagoHandler OnRespuestaPago;
-        public event RespuestaHandler OnRespuesta;
+        public event RespuestaExternaHandler OnRespuesta;
 
-        public void Respuesta(object sender, RespuestaEventArgs e)
+        public void EnviarCancelacionPago()
         {
-        }
-
-        public RespuestaConsultaEstadoPago ConsultaEstadoPagoPersistente(ConsultaEstadoPago xModel)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool EnviarConsultaEstadoPago(ConsultaEstadoPago xModel)
-        {
-            PersistirConsultaPago(ConsultaEstadoPagoPersistente, xModel, ref OnRespuestaPago);
-
             throw new NotImplementedException();
         }
 
@@ -41,7 +30,22 @@ namespace Pagos.Pasarela
             throw new NotImplementedException();
         }
 
+        public void EnviarSolicitudReversion(SolicitudReversion xModel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReiniciarConsultaEstadoPago()
+        {
+            throw new NotImplementedException();
+        }
+
         public void RenovarToken()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RespuestaBase(object sender, RespuestaEventArgs e)
         {
             throw new NotImplementedException();
         }

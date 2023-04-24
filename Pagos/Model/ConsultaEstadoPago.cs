@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pagos.Pasarela
+namespace Pagos
 {
-    public class ConsultaEstadoPago
+    public class ConsultaEstado
     {
         public string Pago_id { get; set; }
 
