@@ -62,6 +62,16 @@
     <Compile Include="IPagos.cs" />
     <Compile Include="IPago.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\MercadoPago.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoPoint.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\ResponsePagoQr.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Taxes.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\CashOut.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Sponsor.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Item.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoQr.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Reversion\RequestReversion.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\TokenRequest.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\TokenResponse.cs" />
     <Compile Include="Pasarela\TipoPasarela\PagoBase.cs" />
     <Compile Include="Pago.cs" />
     <Compile Include="Pasarela\TipoPasarela\PagoFactory.cs" />

@@ -15,6 +15,10 @@ namespace Pagos
 
         public decimal Importe { get; set; }
 
+        public string Sucursal { get; set; }
+
+        public string Pos { get; set; }
+
         /// <summary>
         /// Texto que se va a ver reflejado en la terminal
         /// </summary>

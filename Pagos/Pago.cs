@@ -12,6 +12,17 @@ namespace Pagos
     {
         private IPago _pago;
 
+        public event RespuestaExternaHandler OnRespuesta;
+
+        public void OnRespuestaEvent(object sender, RespuestaExternaEventArgs e)
+        {
+            RespuestaExternaHandler handler = OnRespuesta;
+            if (handler != null)
+            {
+                handler(sender, e);
+            }
+        }
+
         public Pago()
         {
         }
@@ -19,9 +30,8 @@ namespace Pagos
         public Pago(Configuracion xConfiguracion) 
         {
             _pago = PagoFactory.Instance(xConfiguracion);
+            _pago.OnRespuesta += OnRespuestaEvent;
         }
-
-        public event RespuestaExternaHandler OnRespuesta;
 
         public void EnviarCancelacionPago()
         {
@@ -41,6 +51,16 @@ namespace Pagos
         public void ReiniciarConsultaEstadoPago()
         {
             _pago.ReiniciarConsultaEstadoPago();
+        }
+
+        public void ReiniciarConsultaEstadoReversion()
+        {
+            _pago.ReiniciarConsultaEstadoReversion();
+        }
+
+        public void EnviarCancelacionReversion()
+        {
+            _pago.EnviarCancelacionReversion();
         }
     }
 }

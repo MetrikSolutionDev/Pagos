@@ -33,7 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Pagos">
+    <Reference Include="Pagos, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Pagos\bin\Debug\Pagos.dll</HintPath>
     </Reference>
     <Reference Include="System" />

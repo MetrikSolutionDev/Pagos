@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Pagos.CommonPago;
 using static Pagos.Pasarela.PagoBase;
-using static Pagos.Pasarela.PrismaModel.Enums;
 
 namespace Pagos
 {
@@ -45,6 +45,10 @@ namespace Pagos
         {
             get { return _error; }
             set { _error = value; }
+        }
+
+        public RespuestaExternaEventArgs()
+        {
         }
 
         public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje)

@@ -28,8 +28,8 @@ namespace Pagos.Pasarela
 
         public delegate void DelegateParamVoid<T>(T xParam);
 
-        private ConsultaEstadoPago _param;
-        private Func<ConsultaEstadoPago, RespuestaConsultaEstadoPago> _func;
+        private ConsultaEstado _param;
+        private Func<ConsultaEstado, RespuestaConsultaEstadoPago> _func;
         internal Configuracion _configuracion;
         internal string _token;
         internal bool _solicitudEnProceso;
@@ -64,7 +64,7 @@ namespace Pagos.Pasarela
         public virtual void PersistirConsultaPago(Func<ConsultaEstado, RespuestaConsultaEstadoPago> xFunc, ConsultaEstado xParam, ref RespuestaPagoHandler xOnRespuestaPagoHandler)
         {
             _param = xParam;
-            _func = xFunc;
+            //_func = xFunc;
             OnRespuestaPagoInt = xOnRespuestaPagoHandler;
 
             Task sTask = new Task(PersistirPago);
@@ -98,16 +98,16 @@ namespace Pagos.Pasarela
             }
         }
 
-        public virtual async Task GenerarToken<T>(string xAddressSuffix, string xEndPoint, string xParam, object xParametroOriginal, Enums.TipoRespuestaEvento xTipoOrigen)
+        public virtual async Task GenerarToken<T>(string xAddressSuffix, string xEndPoint, string xParam, object xParametroOriginal, CommonPago.TipoRespuestaEvento xTipoOrigen)
         {
             try
             {
                 _client.ActualizarAuthorization(_configuracion.Key, ClientApiEntity.TipeAuthorization.Basic);
                 T sReturn = await _client.GetAsync<T>(xAddressSuffix, xEndPoint, xParam);
 
-                //OnRespuestaSolicitudPagoInt(this, new RespuestaGenericEventArgs<object>(Enums.TipoRespuestaEvento.TOKEN, sReturn, new object(), xDelegate));
+                //OnRespuestaSolicitudPagoInt(this, new RespuestaGenericEventArgs<object>(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, new object(), xDelegate));
 
-                OnRespuestaBase(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.TOKEN, sReturn, xParametroOriginal, xTipoOrigen));
+                OnRespuestaBase(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, xParametroOriginal, xTipoOrigen));
             }
             catch (Exception e)
             {
@@ -122,12 +122,9 @@ namespace Pagos.Pasarela
                 _client.ActualizarAuthorization(_configuracion.Key, ClientApiEntity.TipeAuthorization.Basic);
                 T sReturn = await _client.GetAsync<T>(xAddressSuffix, xEndPoint, xParam);
 
-                OnRespuestaBase(this, new RespuestaEventArgs(Enums.TipoRespuestaEvento.TOKEN, sReturn, new object()));
+                OnRespuestaBase(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, new object()));
             }
-            catch (Exception e)
-            {
-                string asasad = e.Message;
-            }
+            catch{}
 
             //string sAs = "";
 
@@ -175,7 +172,31 @@ namespace Pagos.Pasarela
             //}
         }
 
-        public virtual async Task EnviarSolicitudService<P, R>(Enums.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago)
+        public virtual async Task GenerarToken<P, R>(ClientApiEntity.TipeAuthorization xTipoAutorizacion, string xAddressSuffix, string xEndPoint, string xParam, P xRequestToken)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(_configuracion.Key, xTipoAutorizacion);
+                R sReturn = await _client.PostAsync<P, R>(xEndPoint, xParam, xRequestToken);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, new object()));
+            }
+            catch { }
+        }
+
+        public virtual async Task GenerarToken<P, R>(ClientApiEntity.TipeAuthorization xTipoAutorizacion, string xAddressSuffix, string xEndPoint, P xRequestToken)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(_configuracion.Key, xTipoAutorizacion);
+                R sReturn = await _client.PostAsync<P, R>("", xEndPoint, "", xRequestToken);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, new object()));
+            }
+            catch{}
+        }
+
+        public virtual async Task EnviarSolicitudService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago)
         {
             try
             {
@@ -187,7 +208,19 @@ namespace Pagos.Pasarela
             catch { }
         }
 
-        public virtual async Task EnviarConsultaEstadoService<P, R>(Enums.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestConsultaEstadoPago)
+        public virtual async Task ActualizarSolicitudService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+                R sReturn = await _client.PutAsync<P, R>(xEndPoint, xParam, xRequestPago);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(xTipo, sReturn, xRequestPago));
+            }
+            catch { }
+        }
+
+        public virtual async Task EnviarConsultaEstadoService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestConsultaEstadoPago)
         {
             try
             {
@@ -199,7 +232,7 @@ namespace Pagos.Pasarela
             catch { }
         }
 
-        public virtual async Task EnviarCancelacionService<P, R>(Enums.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestConsultaEstadoPago)
+        public virtual async Task EnviarCancelacionService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestConsultaEstadoPago)
         {
             try
             {
