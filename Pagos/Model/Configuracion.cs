@@ -34,6 +34,8 @@ namespace Pagos
 
         public CommonPago.TipoIntegracion Tipo_integracion { get; set; }
 
+        public CommonPago.TipoEntorno Entorno { get; set; }
+
         public int Cantidad_persistencias { get; set; }
 
         /// <summary>

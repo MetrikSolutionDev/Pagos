@@ -115,6 +115,21 @@ namespace Pagos.Pasarela
             }
         }
 
+        public virtual async Task GenerarToken<T>(ClientApiEntity.TipeAuthorization xTipo, string xAddressSuffix, string xEndPoint, string xParam, object xParametroOriginal, CommonPago.TipoRespuestaEvento xTipoOrigen)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(_configuracion.Key, xTipo);
+                T sReturn = await _client.GetAsync<T>(xAddressSuffix, xEndPoint, xParam);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, xParametroOriginal, xTipoOrigen));
+            }
+            catch (Exception e)
+            {
+                string asasad = e.Message;
+            }
+        }
+
         public virtual async Task GenerarToken<T>(string xAddressSuffix, string xEndPoint, string xParam)
         {
             try
@@ -195,6 +210,19 @@ namespace Pagos.Pasarela
             }
             catch{}
         }
+
+        public virtual async Task GenerarToken<P, R>(ClientApiEntity.TipeAuthorization xTipoAutorizacion, string xAddressSuffix, string xEndPoint, P xRequestToken, object xParametroOriginal, CommonPago.TipoRespuestaEvento xTipoOrigen)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(_configuracion.Key, xTipoAutorizacion);
+                R sReturn = await _client.PostAsync<P, R>("", xEndPoint, "", xRequestToken);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.TOKEN, sReturn, xParametroOriginal, xTipoOrigen));
+            }
+            catch { }
+        }
+
 
         public virtual async Task EnviarSolicitudService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago)
         {

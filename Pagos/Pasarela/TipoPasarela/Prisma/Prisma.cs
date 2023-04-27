@@ -594,7 +594,26 @@ namespace Pagos.Pasarela
 
             RequestPago sRequestPago = new RequestPago();
             sRequestPago.payment_request_data = new Payment_request_data();
-            sRequestPago.payment_request_data.subnet_acquirer_id = "1";
+
+            switch (_configuracion.Entorno) 
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sRequestPago.payment_request_data.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sRequestPago.payment_request_data.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sRequestPago.payment_request_data.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sRequestPago.payment_request_data.subnet_acquirer_id = "2";
+                    break;
+            }
+                
             sRequestPago.payment_request_data.payment_amount = xModel.Importe.ToString("N2");
             sRequestPago.payment_request_data.terminal_menu_text = xModel.Texto_terminal;
             sRequestPago.payment_request_data.ecr_transaction_id = xModel.Referencia.ContainValueString() ? xModel.Referencia : null;

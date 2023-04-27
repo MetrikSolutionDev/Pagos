@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.MercadoPagoModel
 {
-    internal class RequestPagoQr
+    internal class RequestPagoQr : Errores
     {
         public string user_id { get; set; }
 

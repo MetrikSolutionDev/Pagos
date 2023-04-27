@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.MercadoPagoModel
 {
-    internal class ResponsePagoQr : Errores
+    internal class Payment
     {
-        
+        public int id { get; set; }
     }
 }

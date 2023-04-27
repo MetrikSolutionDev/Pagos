@@ -8,11 +8,15 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.MercadoPagoModel
 {
-    internal class RequestPagoPoint
+    internal class ResponsePagoPoint : Errores
     {
         public string id { get; set; }
 
-        public string deviceId { get; set; }
+        public string device_id { get; set; }
+
+        public string state { get; set; }
+
+        public Payment payment { get; set; }
 
         public AdicionalInfo additional_info { get; set; }
 

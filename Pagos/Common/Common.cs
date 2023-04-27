@@ -49,6 +49,13 @@ namespace Pagos
             QR
         }
 
+        public enum TipoEntorno
+        {
+            PRODUCCION,
+            HOMOLOGACION,
+            PRUEBA
+        }
+
         public enum TipoAuthorization
         {
             Bearer,
