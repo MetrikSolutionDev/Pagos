@@ -64,6 +64,7 @@
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\MercadoPago.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Errores.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\AdicionalInfo.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoQrMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\ResponsePagoPoint.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoPoint.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\ResponsePagoQr.cs" />

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.MercadoPagoModel
 {
-    internal class RequestPagoQr : Errores
+    internal class RequestPagoQr //: Errores
     {
         public string user_id { get; set; }
 
@@ -34,7 +34,7 @@ namespace Pagos.Pasarela.MercadoPagoModel
 
         public string title { get; set; }
 
-        public decimal total_amount { get; set; }
+        public int total_amount { get; set; }
 
         public SolicitudPago Parametro_original { get; set; }
 

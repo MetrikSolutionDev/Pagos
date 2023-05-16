@@ -1,8 +1,10 @@
-﻿using Pagos;
+﻿using BusinessData.Autorizacion;
+using Pagos;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -75,36 +77,37 @@ namespace Test
 
             Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.MERCADO_PAGO };
             sConfiguracion.Id_terminales = new List<string>();
-            sConfiguracion.Id_terminales.Add("asd123");
+            sConfiguracion.Id_terminales.Add("2AB7X-CHIPPERBT");
             sConfiguracion.End_point = "https://api.mercadopago.com";
-            sConfiguracion.Sub_end_point = "/point/integration-api";
+            sConfiguracion.Sub_end_point = "/instore/qr/seller/collectors";
             sConfiguracion.Sub_end_point_authorization = "/oauth/token";
-            sConfiguracion.Key = "APP_USR-6829482887143586-042714-97a5d4d0f26bf8fd3b5d5b19f8bf172b-1360534504";
-            sConfiguracion.Client_id = "6829482887143586";
-            sConfiguracion.Client_secret = "AGDe3Hx6zUzSyigt4DzfjpKuUok8Y6vh";
+            sConfiguracion.Key = "APP_USR-1289759863042338-080412-013d9c7a88fd03f47e975307a774dc7d-62251622";
+            sConfiguracion.Client_id = "1289759863042338";
+            sConfiguracion.Client_secret = "9JuptwnCUA9v2VIwfWnJ0LwH5xP7r9co";
             sConfiguracion.Code = "";
-            sConfiguracion.User_id = "1360534504";
-            sConfiguracion.Tipo_integracion = CommonPago.TipoIntegracion.POINT;
-            sConfiguracion.Entorno = CommonPago.TipoEntorno.PRUEBA;
-            
+            sConfiguracion.User_id = "62251622";
+            sConfiguracion.Tipo_integracion = CommonPago.TipoIntegracion.QR;
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+            sConfiguracion.Token = "APP_USR-1289759863042338-080412-013d9c7a88fd03f47e975307a774dc7d-62251622";
+
             IPagos sPago = new Pago(sConfiguracion);
 
             sPago.OnRespuesta += Respuesta;
 
+            //sRequestPago.items.Add(new Item() { sku_number = "00001-555588", category = "marketplace", title = "Point Mini", description = "test", unit_price = 50, quantity = 1, unit_measure = "unit", total_amount = 50 });
+            
             sPago.EnviarSolicitudPago(
                 new SolicitudPago()
-                {
+                { 
                     Cuit_cuil = "20341465681",
-                    Sucursal = "54988848",
-                    //Sucursal = "32785082",
-                    Pos = "987654",
+                    Sucursal = "SUC001_EI",
+                    Pos = "SUC001POS001",
                     Importe = 50,
                     Nombre_integrador = "MS3",
                     Nombre_sistema_integrador = "MS3 POS",
                     Version_sistema_integrador = "1.0.0",
                     Texto_terminal = "",
-                    Referencia = "123456",
-                    Lista_terminales = sConfiguracion.Id_terminales
+                    Referencia = "123456"   
                 });
 
             //Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
@@ -151,6 +154,40 @@ namespace Test
             //sPago.EnviarSolicitudPago(new Pagos.Pasarela.Model.SolicitudPago() { Banco = "banco test", Importe = 1000 });
 
             //sPago.EnviarConsultaEstadoPago(new Pagos.Pasarela.ConsultaEstadoPago() { Pago_id = "asdhfdakfdasjfda" });
+        }
+
+        public void Respuesta(object sender, RespuestaAutorizacionEventArgs e)
+        {
+            //lblError.Text = e.Mensaje;
+        }
+
+        private AutorizacionEntidad sAutorizacion = new AutorizacionEntidad();
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                sAutorizacion.Tipo_auditoria_id = BusinessData.CommonMT.Data.TipoAuditoria.EGRESO_DINERO;
+                sAutorizacion.OnRespuesta += Respuesta;
+                sAutorizacion.Descripcion = "1";
+                sAutorizacion.Punto_venta_id = 31;
+                sAutorizacion.Sucursal_id = 1;
+                sAutorizacion.SolicitarAutorizacion();
+            }
+            catch (Exception ex)
+            {
+                //lblError.Text = ex.Message;
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            lblSuma.Text = (Convert.ToInt32(lblSuma.Text) + 1).ToString();  
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            sAutorizacion.AnularAutorizacion();
         }
     }
 }

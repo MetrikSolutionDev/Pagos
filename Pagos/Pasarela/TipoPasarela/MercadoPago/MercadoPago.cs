@@ -50,8 +50,20 @@ namespace Pagos.Pasarela
             throw new NotImplementedException();
         }
 
+        public void BuscarCajas()
+        {
+            //API METODO PARA RENOVAR TOKEN
+            //GenerarToken<object>(ClientApiEntity.TipeAuthorization.Bearer, "", "/pos", "external_id=11963556&external_store_id=undefined&store_id=undefined&category=undefined", new object(), CommonPago.TipoRespuestaEvento.TOKEN);
+            GenerarToken<object>(ClientApiEntity.TipeAuthorization.Bearer, "", "/pos", "access_token=APP_USR-1289759863042338-080412-013d9c7a88fd03f47e975307a774dc7d-62251622", new object(), CommonPago.TipoRespuestaEvento.TOKEN);
+
+        }
+
         public void EnviarSolicitudPago(SolicitudPago xModel)
         {
+            //Dispositivos();
+            //RenovarToken();
+            //BuscarCajas();
+
             if (SolicitudEnProceso)
             {
                 OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.PROCESO_EN_EJECUCION, "Ya hay una solicitud en proceso", true));
@@ -60,19 +72,24 @@ namespace Pagos.Pasarela
 
             SolicitudEnProceso = true;
 
-            if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR) 
+            if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
             {
-                RequestPagoQr sRequestPago = new RequestPagoQr();
-                sRequestPago.user_id = _configuracion.User_id;
-                sRequestPago.external_pos_id = xModel.Pos;
-                sRequestPago.external_store_id = xModel.Sucursal;
+                RequestPagoQrMin sRequestPago = new RequestPagoQrMin();
                 sRequestPago.external_reference = xModel.Referencia;
                 sRequestPago.total_amount = xModel.Importe;
-                sRequestPago.Parametro_original = xModel;
+                sRequestPago.title = xModel.Titulo;
+                sRequestPago.description = xModel.Texto_terminal;
+                sRequestPago.items = new List<Item>();
 
-                string sEndPoint = sRequestPago.user_id + "/stores/" + sRequestPago.external_store_id + "/pos/" + sRequestPago.external_pos_id + "/orders";
+                foreach (Items sItem in xModel.Items)
+                {
+                    sRequestPago.items.Add(new Item() { sku_number = sItem.Codigo, category = sItem.Categoria, title = sItem.Titulo, description = sItem.Descripcion, unit_price = sItem.Precio_unitario, quantity = sItem.Cantidad, unit_measure = "unit", total_amount = sItem.Total });
+                }
 
-                ActualizarSolicitudService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago);
+                string sEndPoint = _configuracion.User_id + "/stores/" + xModel.Sucursal + "/pos/" + xModel.Pos + "/orders";
+
+                //EnviarSolicitudService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago);
+                ActualizarSolicitudService<RequestPagoQrMin, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago, xModel);
             }
             else
             {
@@ -157,7 +174,14 @@ namespace Pagos.Pasarela
             GenerarToken<TokenRequest, TokenResponse>(ClientApiEntity.TipeAuthorization.Bearer, "", _configuracion.Sub_end_point_authorization, sTokenRequest);
         }
 
-        private void EnviarConsultaEstadoPagoQr(RequestPagoQr xModel)
+        public void Dispositivos()
+        {
+            //API METODO PARA RENOVAR TOKEN
+            GenerarToken<object>(ClientApiEntity.TipeAuthorization.Bearer, "", "/devices", "", new object(), CommonPago.TipoRespuestaEvento.TOKEN);
+             
+        }
+
+        private void EnviarConsultaEstadoPagoQr(SolicitudPago xModel)
         {
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
@@ -169,9 +193,9 @@ namespace Pagos.Pasarela
                 return;
             }
 
-            string sEndPoint = "/" + xModel.user_id + "/pos/" + xModel.external_pos_id + "/orders";
+            string sEndPoint = "/" + _configuracion.User_id + "/pos/" + xModel.Pos + "/orders";
 
-            EnviarConsultaEstadoService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, sEndPoint, "", xModel);
+            EnviarConsultaEstadoService<SolicitudPago, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, sEndPoint, "", xModel);
         }
 
         private void EnviarConsultaEstadoPagoPoint(RequestPagoPoint xModel)
@@ -258,7 +282,7 @@ namespace Pagos.Pasarela
                             {
                                 _requestPagoQr = (RequestPagoQr)e.ParametroOriginal;
 
-                                EnviarSolicitudPago(((RequestPagoQr)e.ParametroOriginal).Parametro_original);
+                                EnviarSolicitudPago((SolicitudPago)e.ParametroOriginal);
                             }
                             
                             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -320,8 +344,8 @@ namespace Pagos.Pasarela
                     if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
                     {                        
                         ResponsePagoQr sRespuestaSolicitudPago = (ResponsePagoQr)e.Respuesta;
-                        RequestPagoQr sParametroOriginalSolicitudPago = (RequestPagoQr)e.ParametroOriginal;
-                        sParametroOriginalSolicitudPago.Parametro_original.Nro_intento_generacion_token++;
+                        SolicitudPago sParametroOriginalSolicitudPago = (SolicitudPago)e.ParametroOriginal;
+                        sParametroOriginalSolicitudPago.Nro_intento_generacion_token++;
 
                         if (sRespuestaSolicitudPago.status.ContainValueString())
                         {
@@ -333,7 +357,7 @@ namespace Pagos.Pasarela
 
                             SolicitudEnProceso = false;
 
-                            sParametroOriginalSolicitudPago.Nro_persistencia = 1;
+                            //sParametroOriginalSolicitudPago.Nro_persistencia = 1;
                             sParametroOriginalSolicitudPago.Inicio_persistencia = DateTime.UtcNow.AddHours(-3);
 
                             ConsultaEstadoEnProceso = true;

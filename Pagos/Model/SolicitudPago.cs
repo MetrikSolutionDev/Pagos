@@ -13,11 +13,13 @@ namespace Pagos
 
         public string Id_entorno { get; set; }
 
-        public decimal Importe { get; set; }
+        public int Importe { get; set; }
 
         public string Sucursal { get; set; }
 
         public string Pos { get; set; }
+
+        public string Titulo { get; set; }
 
         /// <summary>
         /// Texto que se va a ver reflejado en la terminal
@@ -97,5 +99,9 @@ namespace Pagos
         public string Dni_cliente { get; set; }
 
         public int Nro_intento_generacion_token { get; set; }
+
+        public DateTime Inicio_persistencia { get; set; }
+
+        public List<Items> Items { get; set; }
     }
 }

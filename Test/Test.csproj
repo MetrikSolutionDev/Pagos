@@ -33,6 +33,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BusinessData">
+      <HintPath>..\..\MT\BusinessData\bin\Debug\BusinessData.dll</HintPath>
+    </Reference>
+    <Reference Include="Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\BackEndCore\Core\bin\Debug\Core.dll</HintPath>
+    </Reference>
     <Reference Include="Pagos, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Pagos\bin\Debug\Pagos.dll</HintPath>
