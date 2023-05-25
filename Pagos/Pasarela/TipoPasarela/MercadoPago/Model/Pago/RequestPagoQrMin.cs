@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Pagos.Pasarela.MercadoPagoModel
 {
-    internal class RequestPagoQrMin : Errores
+    internal class RequestPagoQrMin //: Errores
     {
         public string external_reference { get; set; }
 

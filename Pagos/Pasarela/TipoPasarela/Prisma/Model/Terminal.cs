@@ -8,6 +8,6 @@ namespace Pagos.Pasarela.PrismaModel
 {
     internal class Terminal
     {
-        public string Termina_id { get; set; }
+        public string terminal_id { get; set; }
     }
 }

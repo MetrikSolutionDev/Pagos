@@ -16,11 +16,19 @@ namespace Pagos
         private string _mensaje;
         private string _info;
         private bool _error;
+        private DatosRespuestaPago _datosRespuestaPago;
+        private bool _pagoConfirmado;
 
         public TipoRespuestaExternaEvento TipoRespuesta
         {
             get { return _tipo; }
             set { _tipo = value; }
+        }
+
+        public DatosRespuestaPago DatosRespuestaPago
+        {
+            get { return _datosRespuestaPago; }
+            set { _datosRespuestaPago = value; }
         }
 
         public object Respuesta
@@ -47,6 +55,11 @@ namespace Pagos
             set { _error = value; }
         }
 
+        public bool PagoConfirmado
+        {
+            get { return _pagoConfirmado; }
+        }
+
         public RespuestaExternaEventArgs()
         {
         }
@@ -69,6 +82,14 @@ namespace Pagos
             _tipo = xTipo;
             _mensaje = xMensaje;
             _error = xError;
+        }
+
+        public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje, DatosRespuestaPago xDatosRespuestaPago)
+        {
+            _tipo = xTipo;
+            _mensaje = xMensaje;
+            _datosRespuestaPago = xDatosRespuestaPago;
+            _pagoConfirmado = true;
         }
     }
 }

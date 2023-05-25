@@ -32,13 +32,13 @@ namespace Pagos.Pasarela.PrismaModel
 
         public string change_amount { get; set; }
 
-        public int bank_account_type { get; set; }
+        public string bank_account_type { get; set; }
 
         public string payment_plan_id { get; set; }
 
-        public Enums.PrintMethod print_method { get; set; }
+        public string print_method { get; set; }
 
-        public Enums.PrintCopies print_copies { get; set; }
+        public string print_copies { get; set; }
         
         public List<Terminal> terminals_list { get; set; }
 
@@ -47,7 +47,7 @@ namespace Pagos.Pasarela.PrismaModel
         /// </summary>
         public string card_brand_product { get; set; }
 
-        public Enums.TerminalOPerationMethod terminal_operation_method { get; set; }
+        public string terminal_operation_method { get; set; }
 
         public bool qr_benefit_code { get; set; }
 

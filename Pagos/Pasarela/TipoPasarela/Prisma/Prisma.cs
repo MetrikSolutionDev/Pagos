@@ -1,6 +1,7 @@
 ﻿using Core.Api;
 using Core.Api.Authentication;
 using Core.Business;
+using Core.Data;
 using Pagos.Pasarela.Eventos;
 using Pagos.Pasarela.PrismaModel;
 using System;
@@ -76,7 +77,7 @@ namespace Pagos.Pasarela
 
                 if (xList.Any(er => er.status == "409"))
                 {
-                    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_409, "Error en retorno de formato de mensaje", true));
+                    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_409, xList.Where(er => er.status == "409").First().title, true));
                 }
 
                 if (xList.Any(er => er.status == "500"))
@@ -170,6 +171,8 @@ namespace Pagos.Pasarela
 
                         ConsultaEstadoEnProceso = true;
 
+                        sRespuestaSolicitudPago.Parametro_original = sParametroOriginalSolicitudPago.Parametro_original;
+
                         EnviarConsultaEstadoPago(sRespuestaSolicitudPago);
                     }
 
@@ -253,7 +256,14 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.PaymentStatus.CONFIRMED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago confirmado"));
+                                DatosRespuestaPago sDatosRespuestaPago = new DatosRespuestaPago();
+                                sDatosRespuestaPago.Nro_cupon = sPaymentDataReturn.transaction_receipt.ToString();
+                                sDatosRespuestaPago.Nro_lote = sPaymentDataReturn.batch_number.ToString();
+                                sDatosRespuestaPago.Nro_terminal = sPaymentDataReturn.terminal_id;
+                                sDatosRespuestaPago.Descripcion_tarjeta = sPaymentDataReturn.card_brand;
+                                sDatosRespuestaPago.Tarjeta = sPaymentDataReturn.card_brand_product;
+
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago confirmado", sDatosRespuestaPago));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
@@ -573,7 +583,7 @@ namespace Pagos.Pasarela
             sConsultaEstado.Referencia = xModel.payment_request_data.subnet_acquirer_id;
             sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
 
-            EnviarCancelacionService<RequestPago, RequestPago>(CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, "/payments/" + sConsultaEstado.Pago_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            EnviarCancelacionPutService<RequestPago, RequestPago>(CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, "/payments/" + sConsultaEstado.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
         }
 
         public void EnviarCancelacionPago() 
@@ -614,7 +624,7 @@ namespace Pagos.Pasarela
                     break;
             }
                 
-            sRequestPago.payment_request_data.payment_amount = xModel.Importe.ToString("N2");
+            sRequestPago.payment_request_data.payment_amount = xModel.Importe.ToString();
             sRequestPago.payment_request_data.terminal_menu_text = xModel.Texto_terminal;
             sRequestPago.payment_request_data.ecr_transaction_id = xModel.Referencia.ContainValueString() ? xModel.Referencia : null;
             sRequestPago.payment_request_data.installments_number = xModel.Cuotas;
@@ -626,36 +636,37 @@ namespace Pagos.Pasarela
             int sResultadoParseoInt = 0;
             bool sParseoHabilitado = int.TryParse(xModel.Tipo_cuenta, out sResultadoParseoInt);
 
-            sRequestPago.payment_request_data.bank_account_type = sParseoHabilitado ? Convert.ToInt32(xModel.Tipo_cuenta) : 0;
+            //sRequestPago.payment_request_data.bank_account_type = sParseoHabilitado ? Convert.ToInt32(xModel.Tipo_cuenta) : 0;
+            sRequestPago.payment_request_data.bank_account_type = xModel.Tipo_cuenta.ContainValueString() ? xModel.Tipo_cuenta : null;
             sRequestPago.payment_request_data.payment_plan_id = xModel.Identificacion_plan_pago.ContainValueString() ? xModel.Identificacion_plan_pago : null;
 
             switch (xModel.Metodo_impresion)
             {
                 case CommonPago.MetodoImpresion.FISCAL:
-                    sRequestPago.payment_request_data.print_method = Enums.PrintMethod.MOBITEF_FISCAL;
+                    sRequestPago.payment_request_data.print_method = Enums.PrintMethod.MOBITEF_FISCAL.ToString();
                     break;
 
                 case CommonPago.MetodoImpresion.NO_FISCAL:
-                    sRequestPago.payment_request_data.print_method = Enums.PrintMethod.MOBITEF_NON_FISCAL;
+                    sRequestPago.payment_request_data.print_method = Enums.PrintMethod.MOBITEF_NON_FISCAL.ToString();
                     break;
             }
 
             switch (xModel.Copias_comprobante_pago)
             {
                 case CommonPago.CopiasComprobantePago.NINGUNO:
-                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.NONE;
+                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.NONE.ToString();
                     break;
 
                 case CommonPago.CopiasComprobantePago.AMBOS:
-                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.BOTH;
+                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.BOTH.ToString();
                     break;
 
                 case CommonPago.CopiasComprobantePago.SOLO_CLIENTE:
-                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.CUSTOMER_ONLY;
+                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.CUSTOMER_ONLY.ToString();
                     break;
 
                 case CommonPago.CopiasComprobantePago.SOLO_COMERCIANTE:
-                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.MERCHANT_ONLY;
+                    sRequestPago.payment_request_data.print_copies = Enums.PrintCopies.MERCHANT_ONLY.ToString();
                     break;
 
             }
@@ -668,7 +679,7 @@ namespace Pagos.Pasarela
             foreach (string sTerminalItem in xModel.Lista_terminales)
             {
                 Terminal sTerminal = new Terminal();
-                sTerminal.Termina_id = sTerminalItem;
+                sTerminal.terminal_id = sTerminalItem;
 
                 sRequestPago.payment_request_data.terminals_list.Add(sTerminal);
             }
@@ -678,20 +689,23 @@ namespace Pagos.Pasarela
             switch (xModel.Metodo_operacion)
             {
                 case CommonPago.MetodoOperacion.TARJETA:
-                    sRequestPago.payment_request_data.terminal_operation_method = Enums.TerminalOPerationMethod.CARD;
+                    sRequestPago.payment_request_data.terminal_operation_method = Enums.TerminalOPerationMethod.CARD.ToString();
                     break;
 
                 case CommonPago.MetodoOperacion.QR:
-                    sRequestPago.payment_request_data.terminal_operation_method = Enums.TerminalOPerationMethod.QR_CODE;
+                    sRequestPago.payment_request_data.terminal_operation_method = Enums.TerminalOPerationMethod.QR_CODE.ToString();
                     break;
             }
 
             sRequestPago.payment_request_data.qr_benefit_code = xModel.Admite_tarjeta_beneficio;
             sRequestPago.payment_request_data.trx_receipt_notes = xModel.Nota_impresion_ticket;
-            sRequestPago.payment_request_data.card_holder_id = xModel.Dni_cliente.ContainValueString() ? xModel.Dni_cliente : null;
+            sRequestPago.payment_request_data.card_holder_id = xModel.Dni_cliente.ContainValueString() ? xModel.Dni_cliente : null; 
             sRequestPago.Parametro_original = xModel;
 
-            EnviarSolicitudService<RequestPago, RequestPago>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, "/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPago);
+            RequestPagoMin sRequestPagoMin = new RequestPagoMin();
+            sRequestPagoMin.payment_request_data = sRequestPago.payment_request_data;
+
+            EnviarSolicitudService<RequestPagoMin, RequestPago>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, "/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPagoMin, sRequestPago);
 
             //RequestPago sReturn = await _client.PostAsync<RequestPago, RequestPago>("/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPago);
 
@@ -754,7 +768,7 @@ namespace Pagos.Pasarela
             foreach (string sTerminalItem in xModel.Lista_terminales)
             {
                 Terminal sTerminal = new Terminal();
-                sTerminal.Termina_id = sTerminalItem;
+                sTerminal.terminal_id = sTerminalItem;
 
                 sRequestReversion.reversal_request_data.terminals_list.Add(sTerminal);
             }

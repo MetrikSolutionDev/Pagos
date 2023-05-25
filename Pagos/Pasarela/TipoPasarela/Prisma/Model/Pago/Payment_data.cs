@@ -45,13 +45,13 @@ namespace Pagos.Pasarela.PrismaModel
 
         public string payment_plan_id { get; set; }
 
-        public string acquirer_id { get; set; }
+        public Enums.Acquirer acquirer_id { get; set; }
 
-        public Enums.Acquirer card_brand_product { get; set; }
+        public string card_brand_product { get; set; }
 
-        public string card_type { get; set; }
+        public Enums.CardType card_type { get; set; }
 
-        public Enums.CardType card_brand { get; set; }
+        public string card_brand { get; set; }
 
         public string bin { get; set; }
 

@@ -34,6 +34,7 @@ namespace Pagos.Pasarela
         internal string _token;
         internal bool _solicitudEnProceso;
         internal bool _consultaEstadoEnProceso;
+        internal bool _solicitudEliminada;
         public ClientApiEntity _client = new ClientApiEntity();
         public string _subEndPointToken = "";
         public static readonly int _tiempoSegundosPersistenciaDefault = 60;
@@ -236,6 +237,18 @@ namespace Pagos.Pasarela
             catch { }
         }
 
+        public virtual async Task EnviarSolicitudService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago, object xParametroOriginal)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+                R sReturn = await _client.PostAsync<P, R>(xEndPoint, xParam, xRequestPago);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(xTipo, sReturn, xParametroOriginal));
+            }
+            catch { }
+        }
+
         public virtual async Task ActualizarSolicitudService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago, object xParametroOriginal)
         {
             try
@@ -253,7 +266,23 @@ namespace Pagos.Pasarela
             try
             {
                 _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+                //object sReturnTemp = await _client.GetAsync<object>(xEndPoint, xParam);
                 R sReturn = await _client.GetAsync<R>(xEndPoint, xParam);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(xTipo, sReturn, xRequestConsultaEstadoPago));
+            }
+            catch(Exception ex)
+            {
+                string sMensaje = ex.Message;
+            }
+        }
+
+        public virtual async Task EnviarConsultaEstadoService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xAddressSuffix, string xEndPoint, string xParam, P xRequestConsultaEstadoPago)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+                R sReturn = await _client.GetAsync<R>(xAddressSuffix, xEndPoint, xParam);
 
                 OnRespuestaBase(this, new RespuestaEventArgs(xTipo, sReturn, xRequestConsultaEstadoPago));
             }
@@ -265,11 +294,30 @@ namespace Pagos.Pasarela
             try
             {
                 _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
-                R sReturn = await _client.PutAsync<R>(xEndPoint, xParam);
+                //R sReturn = await _client.PutAsync<R>(xEndPoint, xParam);
+                await _client.DeleteAsync(xEndPoint);
 
+                OnRespuestaBase(this, new RespuestaEventArgs(xTipo, "", xRequestConsultaEstadoPago));
+            }
+            catch { }
+        }
+
+        public virtual async Task EnviarCancelacionPutService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestConsultaEstadoPago)
+        {
+            try
+            {
+                _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+                R sReturn = await _client.PutAsync<R>(xEndPoint, xParam);
+                
                 OnRespuestaBase(this, new RespuestaEventArgs(xTipo, sReturn, xRequestConsultaEstadoPago));
             }
             catch { }
+        }
+
+        public static async Task<R> EnviarCreateSucursalService<P, R>(ClientApiEntity xClient, string xEndPoint, string xParam, P xSucursalRequest)
+        {
+            //xClient.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+            return await xClient.PostAsync<P, R>("", xEndPoint, xParam, xSucursalRequest);
         }
     }
 }

@@ -38,6 +38,10 @@ namespace Pagos
 
         public int Cantidad_persistencias { get; set; }
 
+        public string Sucursal { get; set; }
+
+        public string Pos { get; set; }
+
         /// <summary>
         /// Si no se configura y esta en 0, por defecto va a tener 60 segundos
         /// </summary>

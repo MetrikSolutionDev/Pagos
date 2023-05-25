@@ -22,6 +22,10 @@ namespace Pagos
         /// </summary>
         void EnviarCancelacionPago();
 
+        //void CreateSucursal(SucursalPos xModel);
+
+        //void CreatePos(SucursalPos xModel);
+
         //bool EnviarConsultaEstadoPago(ConsultaEstadoPago xModel);
 
         //RespuestaConsultaEstadoPago ConsultaEstadoPagoPersistente(ConsultaEstadoPago xModel);

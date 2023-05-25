@@ -15,10 +15,6 @@ namespace Pagos
 
         public int Importe { get; set; }
 
-        public string Sucursal { get; set; }
-
-        public string Pos { get; set; }
-
         public string Titulo { get; set; }
 
         /// <summary>

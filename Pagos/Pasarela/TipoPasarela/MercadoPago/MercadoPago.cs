@@ -5,8 +5,11 @@ using Pagos.Pasarela.MercadoPagoModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Pagos.Pasarela
 {
@@ -81,12 +84,15 @@ namespace Pagos.Pasarela
                 sRequestPago.description = xModel.Texto_terminal;
                 sRequestPago.items = new List<Item>();
 
+                if (xModel.Items == null)
+                    xModel.Items = new List<Items>();
+
                 foreach (Items sItem in xModel.Items)
                 {
                     sRequestPago.items.Add(new Item() { sku_number = sItem.Codigo, category = sItem.Categoria, title = sItem.Titulo, description = sItem.Descripcion, unit_price = sItem.Precio_unitario, quantity = sItem.Cantidad, unit_measure = "unit", total_amount = sItem.Total });
                 }
 
-                string sEndPoint = _configuracion.User_id + "/stores/" + xModel.Sucursal + "/pos/" + xModel.Pos + "/orders";
+                string sEndPoint = _configuracion.User_id + "/stores/" + _configuracion.Sucursal + "/pos/" + _configuracion.Pos + "/orders";
 
                 //EnviarSolicitudService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago);
                 ActualizarSolicitudService<RequestPagoQrMin, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago, xModel);
@@ -136,7 +142,7 @@ namespace Pagos.Pasarela
 
             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
             {
-                EnviarConsultaEstadoPagoQr(_requestPagoQr);
+                //EnviarConsultaEstadoPagoQr(_requestPagoQr);
             }
 
             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -183,6 +189,12 @@ namespace Pagos.Pasarela
 
         private void EnviarConsultaEstadoPagoQr(SolicitudPago xModel)
         {
+            if (_solicitudEliminada)
+            {
+                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.CANCELACION_PAGO, "Solicitud cancelada"));
+                return;
+            }
+
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
             if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
@@ -193,9 +205,11 @@ namespace Pagos.Pasarela
                 return;
             }
 
-            string sEndPoint = "/" + _configuracion.User_id + "/pos/" + xModel.Pos + "/orders";
+            //string sEndPoint = "/" + _configuracion.User_id + "/pos/" + _configuracion.Pos + "/orders";
+            string sEndPoint = "/merchant_orders";
+            string sParam = "access_token=" + Token + "&external_reference=" + xModel.Referencia;
 
-            EnviarConsultaEstadoService<SolicitudPago, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, sEndPoint, "", xModel);
+            EnviarConsultaEstadoService<SolicitudPago, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "", sEndPoint, sParam, xModel);
         }
 
         private void EnviarConsultaEstadoPagoPoint(RequestPagoPoint xModel)
@@ -217,7 +231,7 @@ namespace Pagos.Pasarela
 
         private void EnviarCancelacionPagoQr(RequestPagoQr xModel)
         {
-            string sEndPoint = "/" + xModel.user_id + "/pos/" + xModel.external_pos_id + "/orders";
+            string sEndPoint = "/" + _configuracion.User_id + "/pos/" + _configuracion.Pos + "/orders";
 
             EnviarCancelacionService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, sEndPoint, "", xModel);
         }
@@ -299,7 +313,7 @@ namespace Pagos.Pasarela
 
                             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
                             {
-                                EnviarConsultaEstadoPagoQr((RequestPagoQr)e.ParametroOriginal);
+                                EnviarConsultaEstadoPagoQr((SolicitudPago)e.ParametroOriginal);
                             }
 
                             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -347,12 +361,12 @@ namespace Pagos.Pasarela
                         SolicitudPago sParametroOriginalSolicitudPago = (SolicitudPago)e.ParametroOriginal;
                         sParametroOriginalSolicitudPago.Nro_intento_generacion_token++;
 
-                        if (sRespuestaSolicitudPago.status.ContainValueString())
-                        {
-                            Errores<RequestPagoQr>(sRespuestaSolicitudPago.status, CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sParametroOriginalSolicitudPago, sParametroOriginalSolicitudPago.Parametro_original.Nro_intento_generacion_token);
-                        }
-                        else
-                        {
+                        //if (sRespuestaSolicitudPago.status.ContainValueString())
+                        //{
+                        //    Errores<SolicitudPago>(sRespuestaSolicitudPago.status, CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sParametroOriginalSolicitudPago, 0);
+                        //}
+                        //else
+                        //{
                             OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.SOLICITUD_ENVIADA, "Solicitud enviada con exito", ""));
 
                             SolicitudEnProceso = false;
@@ -363,7 +377,7 @@ namespace Pagos.Pasarela
                             ConsultaEstadoEnProceso = true;
 
                             EnviarConsultaEstadoPagoQr(sParametroOriginalSolicitudPago);
-                        }
+                        //}
                     }
 
                     if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -396,6 +410,40 @@ namespace Pagos.Pasarela
 
                 case CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO:
 
+                    if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
+                    {
+                        ResponsePagoQr sRespuestaSolicitudPago = (ResponsePagoQr)e.Respuesta;
+                        SolicitudPago sParametroOriginalSolicitudPago = (SolicitudPago)e.ParametroOriginal;
+                        sParametroOriginalSolicitudPago.Nro_intento_generacion_token++;
+
+                        //if (sRespuestaSolicitudPago.status.ContainValueString())
+                        //{
+                        //    Errores<SolicitudPago>(sRespuestaSolicitudPago.status, CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sParametroOriginalSolicitudPago, 0);
+                        //}
+                        //else
+                        //{
+
+                        string sEstado = "";
+
+                        if (sRespuestaSolicitudPago.elements == null || (sRespuestaSolicitudPago.elements != null && sRespuestaSolicitudPago.elements.Count() == 0))
+                        {
+                            sEstado = "Pendiente";
+                        }
+                        else 
+                        {
+                            sEstado = "Abierto";
+
+                            if (sRespuestaSolicitudPago.elements.First().status.Equals("closed"))
+                                sEstado = "Cerrado";
+                        }
+
+                        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, sEstado));
+
+                        if(!sEstado.Equals("Cerrado"))
+                            EnviarConsultaEstadoPagoQr(sParametroOriginalSolicitudPago);
+                        //}
+                    }
+
                     if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
                     {
                         ResponsePagoPoint sRespuestaConsultaEstadoPago = (ResponsePagoPoint)e.Respuesta;
@@ -421,6 +469,17 @@ namespace Pagos.Pasarela
                     break;
 
                 case CommonPago.TipoRespuestaEvento.CANCELACION_PAGO:
+                    _solicitudEliminada = true;
+
+                    if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
+                    {
+                        //ResponsePagoQr sRespuestaSolicitudPago = (ResponsePagoQr)e.Respuesta;
+                        //SolicitudPago sParametroOriginalSolicitudPago = (SolicitudPago)e.ParametroOriginal;
+                        //sParametroOriginalSolicitudPago.Nro_intento_generacion_token++;
+
+                        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.CANCELACION_PAGO, "Solicitud cancelada"));
+                    }
+
                     if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
                     {
                         ResponsePagoPoint sRespuestaCancelacionPago = (ResponsePagoPoint)e.Respuesta;
@@ -439,6 +498,61 @@ namespace Pagos.Pasarela
 
                     break;
             }
+        }
+
+        public async static Task<object> CreateSucursal(SucursalPos xModel)
+        {
+            ClientApiEntity sClient = new ClientApiEntity();
+            sClient = new ClientApiEntity(xModel.Configuracion.End_point, xModel.Configuracion.Sub_end_point);
+            sClient.ActualizarAuthorization(xModel.Configuracion.Token, ClientApiEntity.TipeAuthorization.Bearer);
+
+            string sEndPoint = "/user/" + xModel.Configuracion.User_id + "/stores";
+
+            string sNombre = "SUC" + Convert.ToInt32(xModel.Id).ToString().PadLeft(2, '0');
+
+            SucursalRequest sSucursalRequest = new SucursalRequest();
+            sSucursalRequest.external_id = sNombre;
+            sSucursalRequest.name = sNombre;
+            sSucursalRequest.location = new Location();
+            sSucursalRequest.location.street_number = "100";
+            sSucursalRequest.location.street_name = "test";
+            sSucursalRequest.location.state_name = "hsdafhas";
+            sSucursalRequest.location.city_name = "sfdgdfsg";
+            sSucursalRequest.location.state_name = "sdfhdfs";
+            sSucursalRequest.location.latitude = -32.8897322;
+            sSucursalRequest.location.longitude = -68.8443275;
+            sSucursalRequest.location.reference = "prueba";
+
+            string jsonString = @"{" +
+  "'name': 'SUC03'," +
+  "'external_id': 'SUC03'," +
+  "'location': {" +
+   "                 'street_number': '3039'," +
+   " 'street_name': 'Caseros'," +
+   " 'city_name': 'Belgrano'," +
+   " 'state_name': 'Capital Federal'," +
+   " 'latitude': -32.8897322," +
+   " 'longitude': -68.8443275," +
+   " 'reference': '3er Piso'" +
+  "}};";
+
+
+            HttpClient _httpClient = new HttpClient();
+            var uri = "https://api.mercadopago.com/users/1360534504/stores";
+            var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, uri);
+            request.Headers.Add("Authorization", "Bearer APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Content = new StringContent(jsonString, Encoding.UTF8);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            return await PagoBase.EnviarCreateSucursalService<SucursalRequest, SucursalResponse>(sClient, sEndPoint, "", sSucursalRequest);
+        }
+
+        public void CreatePos(SucursalPos xModel)
+        {
+            throw new NotImplementedException();
         }
     }
 }

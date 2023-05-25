@@ -48,6 +48,9 @@
     <Compile Include="Common\Common.cs" />
     <Compile Include="Eventos\RespuestaExternaEventArgs.cs" />
     <Compile Include="IPagoEvento.cs" />
+    <Compile Include="Model\DatosRespuestaPago.cs" />
+    <Compile Include="Model\Items.cs" />
+    <Compile Include="Model\SucursalPos.cs" />
     <Compile Include="Model\SolicitudReversion.cs" />
     <Compile Include="Pasarela\Eventos\RespuestaPagoEventArgs.cs" />
     <Compile Include="Pasarela\Eventos\RespuestaGenericEventArgs.cs" />
@@ -67,6 +70,7 @@
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoQrMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\ResponsePagoPoint.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoPoint.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Element.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\ResponsePagoQr.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Payment.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Taxes.cs" />
@@ -75,13 +79,17 @@
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Item.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoQr.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Reversion\RequestReversion.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Location.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\SucursalRequest.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\TokenRequest.cs" />
+    <Compile Include="Model\SucursalResponse.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\TokenResponse.cs" />
     <Compile Include="Pasarela\TipoPasarela\PagoBase.cs" />
     <Compile Include="Pago.cs" />
     <Compile Include="Pasarela\TipoPasarela\PagoFactory.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Enums.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Errors.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Pago\RequestPagoMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\Reversal_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\Reversal_request_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\RequestReversion.cs" />

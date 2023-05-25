@@ -10,6 +10,28 @@ namespace Pagos.Pasarela.MercadoPagoModel
 {
     internal class Payment
     {
-        public int id { get; set; }
+        public long id { get; set; }
+
+        public decimal transaction_amount { get; set; }
+
+        public decimal total_paid_amount { get; set; }
+
+        public decimal shipping_cost { get; set; }
+
+        public string currency_id { get; set; }
+
+        public string status { get; set; }
+
+        public string status_detail { get; set; }
+
+        public string operation_type { get; set; }
+
+        public DateTime date_approved { get; set; }
+
+        public DateTime date_created { get; set; }
+
+        public DateTime last_modified { get; set; }
+
+        public decimal amount_refunded { get; set; }
     }
 }
