@@ -123,7 +123,7 @@ namespace Pagos.Pasarela
 
                         case CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION:
                             SolicitudEnProceso = false;
-                            EnviarSolicitudReversion((SolicitudReversion)e.ParametroOriginal);
+                            EnviarSolicitudReversion(((RequestReversion)e.ParametroOriginal).Parametro_original);
                             break;
 
                         case CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_REVERSION:
@@ -387,7 +387,9 @@ namespace Pagos.Pasarela
 
                         ConsultaEstadoEnProceso = true;
 
-                        EnviarConsultaEstadoReversion(sParametroOriginalSolicitudReversion);
+                        sRespuestaSolicitudReversion.Parametro_original = sParametroOriginalSolicitudReversion.Parametro_original;
+
+                        EnviarConsultaEstadoReversion(sRespuestaSolicitudReversion);
                     }
 
                     break;
@@ -736,28 +738,46 @@ namespace Pagos.Pasarela
 
             RequestReversion sRequestReversion = new RequestReversion();
             sRequestReversion.reversal_request_data = new Reversal_request_data();
-            sRequestReversion.reversal_request_data.subnet_acquirer_id = "1";
+
+            switch (_configuracion.Entorno)
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "2";
+                    break;
+            }
+
             sRequestReversion.reversal_request_data.payment_id = xModel.Pago_id;
             sRequestReversion.reversal_request_data.terminal_menu_text = xModel.Texto_terminal;
             
             switch (xModel.Copias_comprobante_pago)
             {
                 case CommonPago.CopiasComprobantePago.NINGUNO:
-                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.NONE;
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.NONE.ToString();
                     break;
 
                 case CommonPago.CopiasComprobantePago.AMBOS:
-                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.BOTH;
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.BOTH.ToString();
                     break;
 
                 case CommonPago.CopiasComprobantePago.SOLO_CLIENTE:
-                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.CUSTOMER_ONLY;
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.CUSTOMER_ONLY.ToString();
                     break;
 
                 case CommonPago.CopiasComprobantePago.SOLO_COMERCIANTE:
-                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.MERCHANT_ONLY;
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.MERCHANT_ONLY.ToString();
                     break;
-
             }
 
             sRequestReversion.reversal_request_data.terminals_list = new List<Terminal>();
@@ -773,7 +793,12 @@ namespace Pagos.Pasarela
                 sRequestReversion.reversal_request_data.terminals_list.Add(sTerminal);
             }
 
-            EnviarSolicitudService<RequestReversion, RequestReversion>(CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION, "/reversals", "cuit_cuil=" + xModel.Cuit_cuil, sRequestReversion);
+            sRequestReversion.Parametro_original = xModel;
+
+            RequestReversionMin sRequestReversionMin = new RequestReversionMin();
+            sRequestReversionMin.reversal_request_data = sRequestReversion.reversal_request_data;
+
+            EnviarSolicitudService<RequestReversionMin, RequestReversion>(CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION, "/reversals", "cuit_cuil=" + xModel.Cuit_cuil, sRequestReversionMin, sRequestReversion);
         }
 
         private void EnviarConsultaEstadoReversion(RequestReversion xModel)

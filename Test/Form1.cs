@@ -170,7 +170,8 @@ namespace Test
                 Nombre_integrador = "ECR",
                 Nombre_sistema_integrador = "Software x",
                 Version_sistema_integrador = "3.5",
-                Texto_terminal = "Pago x 13",
+                Texto_terminal = "Pago x 15",
+                Referencia = "12345",
                 Cuotas = 1,
                 Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
                 Nota_impresion_ticket = "nota impresa en el ticket",
@@ -243,6 +244,49 @@ namespace Test
         private void button5_Click(object sender, EventArgs e)
         {
             sPago.EnviarCancelacionPago();
+        }
+
+
+        IReversiones sReversion;
+        private void button6_Click(object sender, EventArgs e)
+        {
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            sConfiguracion.Id_terminales = new List<string>();
+            sConfiguracion.Id_terminales.Add("asd123");
+            sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
+            sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_reversals";
+            sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            sConfiguracion.Key = "ZGFmMzVmM2UtYzM0Mi00MmFkLWE4YmUtNzAwODA3YzM3MDdmOjM1NDBjMDViLTQxNzMtNGYyNi05NTBkLTNkZGE5NjM4YjdlNQ==";
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            sConfiguracion.Tiempo_segundos_persistencias = 500;
+            //sConfiguracion.Key = "";
+
+            sReversion = new Pago(sConfiguracion);
+
+            sReversion.OnRespuesta += Respuesta;
+
+            SolicitudReversion sSolicitudReversion = new SolicitudReversion()
+            {
+                Cuit_cuil = "20-34146568-1",
+                Importe = 120000,
+                Nombre_integrador = "ECR",
+                Nombre_sistema_integrador = "Software x",
+                Version_sistema_integrador = "3.5",
+                Texto_terminal = "Pago reverso x 1",
+                Referencia = "12345",
+                Cuotas = 1,
+                Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
+                Nota_impresion_ticket = "nota impresa en el ticket",
+                Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
+                Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
+                Admite_tarjeta_beneficio = true,
+                Pago_id = "476ca6c9-4117-4be8-a47b-029ffbeafd7f"
+            };
+
+            sSolicitudReversion.Lista_terminales = new List<string>();
+            sSolicitudReversion.Lista_terminales.Add("38011127");
+
+            sReversion.EnviarSolicitudReversion(sSolicitudReversion);
         }
     }
 }

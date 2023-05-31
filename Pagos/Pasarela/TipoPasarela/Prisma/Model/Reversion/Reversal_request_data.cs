@@ -19,7 +19,7 @@ namespace Pagos.Pasarela.PrismaModel
 
         public string terminal_menu_text { get; set; }
 
-        public Enums.PrintCopies print_copies { get; set; }
+        public string print_copies { get; set; }
         
         public List<Terminal> terminals_list { get; set; }
     }

@@ -45,7 +45,7 @@ namespace Pagos
 
         public void EnviarSolicitudReversion(SolicitudReversion xModel)
         {
-            throw new NotImplementedException();
+            _pago.EnviarSolicitudReversion(xModel);
         }
 
         public void ReiniciarConsultaEstadoPago()

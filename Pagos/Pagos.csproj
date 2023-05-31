@@ -90,6 +90,7 @@
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Enums.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Errors.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Pago\RequestPagoMin.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\RequestReversionMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\Reversal_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\Reversal_request_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\RequestReversion.cs" />
