@@ -7,6 +7,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -154,7 +156,7 @@ namespace Test
             sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
             sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_payments";
             sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
-            sConfiguracion.Key = "ZGFmMzVmM2UtYzM0Mi00MmFkLWE4YmUtNzAwODA3YzM3MDdmOjM1NDBjMDViLTQxNzMtNGYyNi05NTBkLTNkZGE5NjM4YjdlNQ==";
+            sConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
             sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
             sConfiguracion.Tiempo_segundos_persistencias = 500;
             //sConfiguracion.Key = "";
@@ -170,8 +172,8 @@ namespace Test
                 Nombre_integrador = "ECR",
                 Nombre_sistema_integrador = "Software x",
                 Version_sistema_integrador = "3.5",
-                Texto_terminal = "Pago x 15",
-                Referencia = "12345",
+                Texto_terminal = "Pago x 17",
+                Referencia = "987654",
                 Cuotas = 1,
                 Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
                 Nota_impresion_ticket = "nota impresa en el ticket",
@@ -181,7 +183,8 @@ namespace Test
             };
 
             sSolicitudPago.Lista_terminales = new List<string>();
-            sSolicitudPago.Lista_terminales.Add("38011127");
+            //sSolicitudPago.Lista_terminales.Add("38011127");
+            sSolicitudPago.Lista_terminales.Add("38011128");
 
             sPago.EnviarSolicitudPago(sSolicitudPago);
 
@@ -233,7 +236,34 @@ namespace Test
 
         private void button3_Click(object sender, EventArgs e)
         {
-            lblSuma.Text = (Convert.ToInt32(lblSuma.Text) + 1).ToString();  
+            //lblSuma.Text = (Convert.ToInt32(lblSuma.Text) + 1).ToString();  
+
+
+            string jsonString = @"{" +
+  "'name': 'SUC04'," +
+  "'external_id': 'SUC04'," +
+  "'location': {" +
+   "                 'street_number': '3039'," +
+   " 'street_name': 'Caseros'," +
+   " 'city_name': 'Belgrano'," +
+   " 'state_name': 'Capital Federal'," +
+   " 'latitude': -32.8897322," +
+   " 'longitude': -68.8443275," +
+   " 'reference': '3er Piso'" +
+  "}};";
+
+
+            HttpClient _httpClient = new HttpClient();
+            var uri = "https://api.mercadopago.com/users/1360534504/stores";
+            var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, uri);
+            request.Headers.Add("Authorization", "Bearer APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Content = new StringContent(jsonString, Encoding.UTF8);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            var response = _httpClient.SendAsync(request);
+            //response.EnsureSuccessStatusCode();
+
+            //return response;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -256,7 +286,7 @@ namespace Test
             sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
             sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_reversals";
             sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
-            sConfiguracion.Key = "ZGFmMzVmM2UtYzM0Mi00MmFkLWE4YmUtNzAwODA3YzM3MDdmOjM1NDBjMDViLTQxNzMtNGYyNi05NTBkLTNkZGE5NjM4YjdlNQ==";
+            sConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
             sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
             sConfiguracion.Tiempo_segundos_persistencias = 500;
             //sConfiguracion.Key = "";
@@ -272,21 +302,26 @@ namespace Test
                 Nombre_integrador = "ECR",
                 Nombre_sistema_integrador = "Software x",
                 Version_sistema_integrador = "3.5",
-                Texto_terminal = "Pago reverso x 1",
-                Referencia = "12345",
+                Texto_terminal = "Pago reverso x 18",
+                Referencia = "987654",
                 Cuotas = 1,
                 Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
                 Nota_impresion_ticket = "nota impresa en el ticket",
                 Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
                 Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
                 Admite_tarjeta_beneficio = true,
-                Pago_id = "476ca6c9-4117-4be8-a47b-029ffbeafd7f"
+                Pago_id = "4934ba4e-d375-4848-b73b-9501286cc0d4"
             };
 
             sSolicitudReversion.Lista_terminales = new List<string>();
-            sSolicitudReversion.Lista_terminales.Add("38011127");
+            sSolicitudReversion.Lista_terminales.Add("38011128");
 
             sReversion.EnviarSolicitudReversion(sSolicitudReversion);
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            sReversion.EnviarCancelacionReversion();
         }
     }
 }

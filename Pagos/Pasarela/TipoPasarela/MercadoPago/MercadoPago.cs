@@ -500,57 +500,84 @@ namespace Pagos.Pasarela
             }
         }
 
-        public async static Task<object> CreateSucursal(SucursalPos xModel)
+        public async static Task<HttpResponseMessage> CreateSucursal(SucursalPos xModel)
         {
-            ClientApiEntity sClient = new ClientApiEntity();
-            sClient = new ClientApiEntity(xModel.Configuracion.End_point, xModel.Configuracion.Sub_end_point);
-            sClient.ActualizarAuthorization(xModel.Configuracion.Token, ClientApiEntity.TipeAuthorization.Bearer);
+            //ClientApiEntity sClient = new ClientApiEntity();
+            //sClient = new ClientApiEntity(xModel.Configuracion.End_point, xModel.Configuracion.Sub_end_point);
+            //sClient.ActualizarAuthorization(xModel.Configuracion.Token, ClientApiEntity.TipeAuthorization.Bearer);
 
-            string sEndPoint = "/user/" + xModel.Configuracion.User_id + "/stores";
+            //string sEndPoint = "/user/" + xModel.Configuracion.User_id + "/stores";
 
-            string sNombre = "SUC" + Convert.ToInt32(xModel.Id).ToString().PadLeft(2, '0');
+            //string sNombre = "SUC" + Convert.ToInt32(xModel.Id).ToString().PadLeft(2, '0');
 
-            SucursalRequest sSucursalRequest = new SucursalRequest();
-            sSucursalRequest.external_id = sNombre;
-            sSucursalRequest.name = sNombre;
-            sSucursalRequest.location = new Location();
-            sSucursalRequest.location.street_number = "100";
-            sSucursalRequest.location.street_name = "test";
-            sSucursalRequest.location.state_name = "hsdafhas";
-            sSucursalRequest.location.city_name = "sfdgdfsg";
-            sSucursalRequest.location.state_name = "sdfhdfs";
-            sSucursalRequest.location.latitude = -32.8897322;
-            sSucursalRequest.location.longitude = -68.8443275;
-            sSucursalRequest.location.reference = "prueba";
+            //SucursalRequest sSucursalRequest = new SucursalRequest();
+            //sSucursalRequest.external_id = sNombre;
+            //sSucursalRequest.name = sNombre;
+            //sSucursalRequest.location = new Location();
+            //sSucursalRequest.location.street_number = "100";
+            //sSucursalRequest.location.street_name = "test";
+            //sSucursalRequest.location.state_name = "hsdafhas";
+            //sSucursalRequest.location.city_name = "sfdgdfsg";
+            //sSucursalRequest.location.state_name = "sdfhdfs";
+            //sSucursalRequest.location.latitude = -32.8897322;
+            //sSucursalRequest.location.longitude = -68.8443275;
+            //sSucursalRequest.location.reference = "prueba";
 
-            string jsonString = @"{" +
-  "'name': 'SUC03'," +
-  "'external_id': 'SUC03'," +
-  "'location': {" +
-   "                 'street_number': '3039'," +
-   " 'street_name': 'Caseros'," +
-   " 'city_name': 'Belgrano'," +
-   " 'state_name': 'Capital Federal'," +
-   " 'latitude': -32.8897322," +
-   " 'longitude': -68.8443275," +
-   " 'reference': '3er Piso'" +
-  "}};";
+            HttpResponseMessage sReturnh = new HttpResponseMessage();
+
+            try
+            {
+
+                string jsonString = @"{" +
+      "'name': 'SUC04'," +
+      "'external_id': 'SUC04'," +
+      "'location': {" +
+       "                 'street_number': '3039'," +
+       " 'street_name': 'Caseros'," +
+       " 'city_name': 'Belgrano'," +
+       " 'state_name': 'Capital Federal'," +
+       " 'latitude': -32.8897322," +
+       " 'longitude': -68.8443275," +
+       " 'reference': '3er Piso'" +
+      "}};";
 
 
-            HttpClient _httpClient = new HttpClient();
-            var uri = "https://api.mercadopago.com/users/1360534504/stores";
-            var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, uri);
-            request.Headers.Add("Authorization", "Bearer APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504");
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            request.Content = new StringContent(jsonString, Encoding.UTF8);
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+                HttpClient _httpClient = new HttpClient();
+                var uri = "https://api.mercadopago.com/users/1360534504/stores";
+                var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, uri);
+                request.Headers.Add("Authorization", "Bearer APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504");
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Content = new StringContent(jsonString, Encoding.UTF8);
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                var response = await _httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
 
-            return await PagoBase.EnviarCreateSucursalService<SucursalRequest, SucursalResponse>(sClient, sEndPoint, "", sSucursalRequest);
+                return response;
+
+                //return await PagoBase.EnviarCreateSucursalService<SucursalRequest, SucursalResponse>(sClient, sEndPoint, "", sSucursalRequest);
+            }
+            catch
+            {
+                return sReturnh;
+            }
         }
 
         public void CreatePos(SucursalPos xModel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EnviarSolicitudDevolucion(SolicitudDevolucion xModel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReiniciarConsultaEstadoDevolucion()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EnviarCancelacionDevolucion()
         {
             throw new NotImplementedException();
         }

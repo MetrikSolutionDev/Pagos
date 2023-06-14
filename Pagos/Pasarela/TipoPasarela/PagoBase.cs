@@ -249,6 +249,20 @@ namespace Pagos.Pasarela
             catch { }
         }
 
+        public virtual async Task<R> EnviarSolicitudServiceTest<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago, object xParametroOriginal)
+        {
+            //try
+            //{
+                _client.ActualizarAuthorization(Token, ClientApiEntity.TipeAuthorization.Bearer);
+                R sReturn = await _client.PostAsync<P, R>(xEndPoint, xParam, xRequestPago);
+
+                OnRespuestaBase(this, new RespuestaEventArgs(xTipo, sReturn, xParametroOriginal));
+
+                return sReturn;
+            //}
+            //catch { return new object(); }
+        }
+
         public virtual async Task ActualizarSolicitudService<P, R>(CommonPago.TipoRespuestaEvento xTipo, string xEndPoint, string xParam, P xRequestPago, object xParametroOriginal)
         {
             try

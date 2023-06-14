@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Pagos
 {
-    public interface IPago : IPagos, IReversiones
+    public interface IPago : IPagos, IReversiones, IDevoluciones
     {
     }
 }

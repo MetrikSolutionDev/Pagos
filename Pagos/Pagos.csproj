@@ -48,8 +48,11 @@
     <Compile Include="Common\Common.cs" />
     <Compile Include="Eventos\RespuestaExternaEventArgs.cs" />
     <Compile Include="IPagoEvento.cs" />
+    <Compile Include="IDevoluciones.cs" />
+    <Compile Include="Model\DatosRespuesta.cs" />
     <Compile Include="Model\DatosRespuestaPago.cs" />
     <Compile Include="Model\Items.cs" />
+    <Compile Include="Model\SolicitudDevolucion.cs" />
     <Compile Include="Model\SucursalPos.cs" />
     <Compile Include="Model\SolicitudReversion.cs" />
     <Compile Include="Pasarela\Eventos\RespuestaPagoEventArgs.cs" />
@@ -90,6 +93,8 @@
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Enums.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Errors.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Pago\RequestPagoMin.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\RequestDevolucion.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\RequestDevolucionMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\RequestReversionMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\Reversal_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Reversion\Reversal_request_data.cs" />

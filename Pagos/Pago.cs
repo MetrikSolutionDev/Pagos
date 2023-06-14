@@ -62,5 +62,20 @@ namespace Pagos
         {
             _pago.EnviarCancelacionReversion();
         }
+
+        public void EnviarSolicitudDevolucion(SolicitudDevolucion xModel)
+        {
+            _pago.EnviarSolicitudDevolucion(xModel);
+        }
+
+        public void ReiniciarConsultaEstadoDevolucion()
+        {
+            _pago.ReiniciarConsultaEstadoDevolucion();
+        }
+
+        public void EnviarCancelacionDevolucion()
+        {
+            _pago.EnviarCancelacionDevolucion();
+        }
     }
 }

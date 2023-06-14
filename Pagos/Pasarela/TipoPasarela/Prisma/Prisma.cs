@@ -7,6 +7,7 @@ using Pagos.Pasarela.PrismaModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -24,6 +25,7 @@ namespace Pagos.Pasarela
     {
         private RequestPago _requestPago;
         private RequestReversion _requestReversion;
+        private RequestDevolucion _requestDevolucion;
 
         public Prisma(Configuracion xConfiguracion)
         {
@@ -133,6 +135,20 @@ namespace Pagos.Pasarela
 
                         case CommonPago.TipoRespuestaEvento.CANCELACION_REVERSION:
                             EnviarCancelacionReversion((RequestReversion)e.ParametroOriginal);
+                            break;
+
+                        case CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION:
+                            SolicitudEnProceso = false;
+                            EnviarSolicitudDevolucion(((RequestDevolucion)e.ParametroOriginal).Parametro_original);
+                            break;
+
+                        case CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION:
+                            ConsultaEstadoEnProceso = false;
+                            EnviarConsultaEstadoDevolucion((RequestDevolucion)e.ParametroOriginal);
+                            break;
+
+                        case CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION:
+                            EnviarCancelacionDevolucion((RequestDevolucion)e.ParametroOriginal);
                             break;
                     }
 
@@ -383,7 +399,7 @@ namespace Pagos.Pasarela
                         sParametroOriginalSolicitudReversion.Nro_persistencia = 1;
                         sParametroOriginalSolicitudReversion.Inicio_persistencia = DateTime.UtcNow.AddHours(-3);
 
-                        _requestReversion = sParametroOriginalSolicitudReversion;
+                        _requestReversion = sRespuestaSolicitudReversion;
 
                         ConsultaEstadoEnProceso = true;
 
@@ -424,7 +440,12 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.ReversalStatus.REVERSED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago cancelado"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago devuelto"));
+
+                                break;
+
+                            case Enums.ReversalStatus.REVERSAL_UNDONE:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Reversion deshecha"));
 
                                 break;
 
@@ -478,7 +499,7 @@ namespace Pagos.Pasarela
                         switch (sReversalDataReturn.reversal_status)
                         {
                             case Enums.ReversalStatus.REVERSAL_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud de reversion recibida con exito"));
 
                                 break;
 
@@ -488,7 +509,12 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.ReversalStatus.REVERSED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago cancelado"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Reversion cancelada"));
+
+                                break;
+
+                            case Enums.ReversalStatus.REVERSAL_UNDONE:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Reversion deshecha"));
 
                                 break;
 
@@ -520,6 +546,163 @@ namespace Pagos.Pasarela
                     }
 
                     break;
+
+                case CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION:
+
+                    RequestDevolucion sRespuestaSolicitudDevolucion = (RequestDevolucion)e.Respuesta;
+                    RequestDevolucion sParametroOriginalSolicitudDevolucion = (RequestDevolucion)e.ParametroOriginal;
+                    sParametroOriginalSolicitudDevolucion.Parametro_original.Nro_intento_generacion_token++;
+
+                    if (sRespuestaSolicitudDevolucion.errors != null)
+                    {
+                        Errores<RequestDevolucion>(sRespuestaSolicitudDevolucion.errors, CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION, sParametroOriginalSolicitudDevolucion, sParametroOriginalSolicitudDevolucion.Parametro_original.Nro_intento_generacion_token);
+                    }
+                    else
+                    {
+                        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.SOLICITUD_ENVIADA, "Solicitud enviada con exito"));
+
+                        SolicitudEnProceso = false;
+
+                        sParametroOriginalSolicitudDevolucion.Nro_persistencia = 1;
+                        sParametroOriginalSolicitudDevolucion.Inicio_persistencia = DateTime.UtcNow.AddHours(-3);
+
+                        _requestDevolucion = sParametroOriginalSolicitudDevolucion;
+
+                        ConsultaEstadoEnProceso = true;
+
+                        sRespuestaSolicitudDevolucion.Parametro_original = sParametroOriginalSolicitudDevolucion.Parametro_original;
+
+                        EnviarConsultaEstadoDevolucion(sRespuestaSolicitudDevolucion);
+                    }
+
+                    break;
+
+                case CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION:
+                    RequestDevolucion sRespuestaConsultaEstadoDevolucion = (RequestDevolucion)e.Respuesta;
+                    RequestDevolucion sParametroOriginalConsultaEstadoDevolucion = (RequestDevolucion)e.ParametroOriginal;
+                    sParametroOriginalConsultaEstadoDevolucion.Parametro_original.Nro_intento_generacion_token++;
+
+                    if (sRespuestaConsultaEstadoDevolucion.errors != null)
+                    {
+                        Errores<RequestDevolucion>(sRespuestaConsultaEstadoDevolucion.errors, CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION, sParametroOriginalConsultaEstadoDevolucion, sParametroOriginalConsultaEstadoDevolucion.Parametro_original.Nro_intento_generacion_token);
+
+                        ConsultaEstadoEnProceso = false;
+                    }
+                    else
+                    {
+                        //Reversal_data sReversalDataReturn = sRespuestaConsultaEstadoReversion.reversal_data;
+
+                        //switch (sReversalDataReturn.reversal_status)
+                        //{
+                        //    case Enums.ReversalStatus.REVERSAL_REQUEST:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+
+                        //        EnviarConsultaEstadoReversion(sParametroOriginalConsultaEstadoReversion);
+                        //        break;
+
+                        //    case Enums.ReversalStatus.PROCESSING_REVERSAL:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando devolucion"));
+
+                        //        EnviarConsultaEstadoReversion(sParametroOriginalConsultaEstadoReversion);
+                        //        break;
+
+                        //    case Enums.ReversalStatus.REVERSED:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago cancelado"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.UNDO_REVERSAL_REQUEST:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud"));
+                        //        ConsultaEstadoEnProceso = false;
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.PROCESSING_UNDO_REVERSAL:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento"));
+                        //        ConsultaEstadoEnProceso = false;
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.REVERSAL_DECLINED:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion rechazada"));
+                        //        ConsultaEstadoEnProceso = false;
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.UNDO_REVERSAL_DECLINED:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer revolucion rechazada"));
+                        //        ConsultaEstadoEnProceso = false;
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.REVERSAL_ERROR:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento de la devolucion"));
+                        //        ConsultaEstadoEnProceso = false;
+
+                        //        break;
+                        //}
+                    }
+
+                    break;
+
+                case CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION:
+                    RequestDevolucion sRespuestaCancelacionDevolucion = (RequestDevolucion)e.Respuesta;
+                    RequestDevolucion sParametroOriginalCancelacionDevolucion = (RequestDevolucion)e.ParametroOriginal;
+                    sParametroOriginalCancelacionDevolucion.Parametro_original.Nro_intento_generacion_token++;
+
+                    if (sRespuestaCancelacionDevolucion.errors != null)
+                    {
+                        Errores<RequestDevolucion>(sRespuestaCancelacionDevolucion.errors, CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION, sParametroOriginalCancelacionDevolucion, sParametroOriginalCancelacionDevolucion.Parametro_original.Nro_intento_generacion_token);
+                    }
+                    else
+                    {
+                        //Reversal_data sReversalDataReturn = sRespuestaCancelacionReversion.reversal_data;
+
+                        //switch (sReversalDataReturn.reversal_status)
+                        //{
+                        //    case Enums.ReversalStatus.REVERSAL_REQUEST:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.PROCESSING_REVERSAL:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando devolucion"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.REVERSED:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago cancelado"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.UNDO_REVERSAL_REQUEST:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.PROCESSING_UNDO_REVERSAL:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.REVERSAL_DECLINED:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion rechazada"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.UNDO_REVERSAL_DECLINED:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer revolucion rechazada"));
+
+                        //        break;
+
+                        //    case Enums.ReversalStatus.REVERSAL_ERROR:
+                        //        OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento de la devolucion"));
+
+                        //        break;
+                        //}
+                    }
+
+                    break;
             }
         }
 
@@ -546,13 +729,13 @@ namespace Pagos.Pasarela
 
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
-            if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
-            {
-                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_401, "Error: Tiempo de persistencia agotado", true));
-                ConsultaEstadoEnProceso = false;
+            //if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
+            //{
+            //    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_401, "Error: Tiempo de persistencia agotado", true));
+            //    ConsultaEstadoEnProceso = false;
 
-                return;
-            }
+            //    return;
+            //}
 
             Payment_data sPaymentData = xModel.payment_data;
 
@@ -726,6 +909,130 @@ namespace Pagos.Pasarela
             GenerarToken<TokenResponse>("", _configuracion.Sub_end_point_authorization, "grant_type=client_credentials", xParametroOriginal, xTipoOrigen);
         }
 
+        public static async Task<DatosRespuesta> EnviarSolicitudReversionTest(SolicitudReversion xModel) 
+        {
+            //IReversiones sReversion;
+
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            sConfiguracion.Id_terminales = new List<string>();
+            sConfiguracion.Id_terminales.Add("asd123");
+            sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
+            sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_reversals";
+            sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            sConfiguracion.Key = "ZGFmMzVmM2UtYzM0Mi00MmFkLWE4YmUtNzAwODA3YzM3MDdmOjM1NDBjMDViLTQxNzMtNGYyNi05NTBkLTNkZGE5NjM4YjdlNQ==";
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            sConfiguracion.Tiempo_segundos_persistencias = 500;
+            //sConfiguracion.Key = "";
+
+            Prisma sPrisma = new Prisma(sConfiguracion);
+
+            //Pago sReversion = new Pago(sConfiguracion);
+
+            //sReversion.OnRespuesta += Respuesta;
+
+            SolicitudReversion sSolicitudReversion = new SolicitudReversion()
+            {
+                Cuit_cuil = "20-34146568-1",
+                Importe = 120000,
+                Nombre_integrador = "ECR",
+                Nombre_sistema_integrador = "Software x",
+                Version_sistema_integrador = "3.5",
+                Texto_terminal = "Pago reverso x 1",
+                Referencia = "12345",
+                Cuotas = 1,
+                Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
+                Nota_impresion_ticket = "nota impresa en el ticket",
+                Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
+                Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
+                Admite_tarjeta_beneficio = true,
+                Pago_id = "476ca6c9-4117-4be8-a47b-029ffbeafd7f"
+            };
+
+            sSolicitudReversion.Lista_terminales = new List<string>();
+            sSolicitudReversion.Lista_terminales.Add("38011127");
+
+            return await sPrisma.EnviarSolicitudReversionAsync(sSolicitudReversion);
+
+            //return true;
+        }
+
+        public async Task<DatosRespuesta> EnviarSolicitudReversionAsync(SolicitudReversion xModel)
+        {
+            //if (SolicitudEnProceso)
+            //{
+            //    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.PROCESO_EN_EJECUCION, "Ya hay una solicitud en proceso", true));
+            //    return;
+            //}
+
+            SolicitudEnProceso = true;
+
+            RequestReversion sRequestReversion = new RequestReversion();
+            sRequestReversion.reversal_request_data = new Reversal_request_data();
+
+            switch (_configuracion.Entorno)
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sRequestReversion.reversal_request_data.subnet_acquirer_id = "2";
+                    break;
+            }
+
+            sRequestReversion.reversal_request_data.payment_id = xModel.Pago_id;
+            sRequestReversion.reversal_request_data.terminal_menu_text = xModel.Texto_terminal;
+
+            switch (xModel.Copias_comprobante_pago)
+            {
+                case CommonPago.CopiasComprobantePago.NINGUNO:
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.NONE.ToString();
+                    break;
+
+                case CommonPago.CopiasComprobantePago.AMBOS:
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.BOTH.ToString();
+                    break;
+
+                case CommonPago.CopiasComprobantePago.SOLO_CLIENTE:
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.CUSTOMER_ONLY.ToString();
+                    break;
+
+                case CommonPago.CopiasComprobantePago.SOLO_COMERCIANTE:
+                    sRequestReversion.reversal_request_data.print_copies = Enums.PrintCopies.MERCHANT_ONLY.ToString();
+                    break;
+            }
+
+            sRequestReversion.reversal_request_data.terminals_list = new List<Terminal>();
+
+            if (xModel.Lista_terminales == null)
+                xModel.Lista_terminales = new List<string>();
+
+            foreach (string sTerminalItem in xModel.Lista_terminales)
+            {
+                Terminal sTerminal = new Terminal();
+                sTerminal.terminal_id = sTerminalItem;
+
+                sRequestReversion.reversal_request_data.terminals_list.Add(sTerminal);
+            }
+
+            sRequestReversion.Parametro_original = xModel;
+
+            RequestReversionMin sRequestReversionMin = new RequestReversionMin();
+            sRequestReversionMin.reversal_request_data = sRequestReversion.reversal_request_data;
+
+            RequestReversion sReturn = await EnviarSolicitudServiceTest<RequestReversionMin, RequestReversion>(CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION, "/reversals", "cuit_cuil=" + xModel.Cuit_cuil, sRequestReversionMin, sRequestReversion);
+
+            return new DatosRespuesta() { Id = "djfashfaksfja", Descripcion = "pruebaaaa" };
+        }
+
         public void EnviarSolicitudReversion(SolicitudReversion xModel)
         {
             if (SolicitudEnProceso)
@@ -805,13 +1112,13 @@ namespace Pagos.Pasarela
         {
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
-            if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
-            {
-                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_401, "Error: Tiempo de persistencia agotado", true));
-                ConsultaEstadoEnProceso = false;
+            //if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
+            //{
+            //    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_401, "Error: Tiempo de persistencia agotado", true));
+            //    ConsultaEstadoEnProceso = false;
 
-                return;
-            }
+            //    return;
+            //}
 
             Reversal_data sReversalData = xModel.reversal_data;
 
@@ -832,7 +1139,7 @@ namespace Pagos.Pasarela
             sConsultaEstado.Referencia = xModel.reversal_request_data.subnet_acquirer_id;
             sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
 
-            EnviarCancelacionService<RequestReversion, RequestReversion>(CommonPago.TipoRespuestaEvento.CANCELACION_REVERSION, "/reversals/" + sConsultaEstado.Pago_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
+            EnviarCancelacionPutService<RequestReversion, RequestReversion>(CommonPago.TipoRespuestaEvento.CANCELACION_REVERSION, "/reversals/" + sConsultaEstado.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
         }
 
         public void EnviarCancelacionReversion()
@@ -850,6 +1157,137 @@ namespace Pagos.Pasarela
 
             ConsultaEstadoEnProceso = true;
             EnviarConsultaEstadoReversion(_requestReversion);
+        }
+
+        public void EnviarSolicitudDevolucion(SolicitudDevolucion xModel)
+        {
+            if (SolicitudEnProceso)
+            {
+                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.PROCESO_EN_EJECUCION, "Ya hay una solicitud en proceso", true));
+                return;
+            }
+
+            SolicitudEnProceso = true;
+
+            RequestDevolucion sRequestDevolucion = new RequestDevolucion();
+            
+            switch (_configuracion.Entorno)
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sRequestDevolucion.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sRequestDevolucion.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sRequestDevolucion.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sRequestDevolucion.subnet_acquirer_id = "2";
+                    break;
+            }
+
+            sRequestDevolucion.terminal_menu_text = xModel.Texto_terminal;
+            sRequestDevolucion.refund_amount = xModel.Importe.ToString();
+            sRequestDevolucion.card_brand_product = xModel.Marca_tarjeta.ContainValueString() ? xModel.Marca_tarjeta : null;
+
+            switch (xModel.Copias_comprobante_pago)
+            {
+                case CommonPago.CopiasComprobantePago.NINGUNO:
+                    sRequestDevolucion.print_copies = Enums.PrintCopies.NONE.ToString();
+                    break;
+
+                case CommonPago.CopiasComprobantePago.AMBOS:
+                    sRequestDevolucion.print_copies = Enums.PrintCopies.BOTH.ToString();
+                    break;
+
+                case CommonPago.CopiasComprobantePago.SOLO_CLIENTE:
+                    sRequestDevolucion.print_copies = Enums.PrintCopies.CUSTOMER_ONLY.ToString();
+                    break;
+
+                case CommonPago.CopiasComprobantePago.SOLO_COMERCIANTE:
+                    sRequestDevolucion.print_copies = Enums.PrintCopies.MERCHANT_ONLY.ToString();
+                    break;
+            }
+
+            sRequestDevolucion.terminals_list = new List<Terminal>();
+
+            if (xModel.Lista_terminales == null)
+                xModel.Lista_terminales = new List<string>();
+
+            foreach (string sTerminalItem in xModel.Lista_terminales)
+            {
+                Terminal sTerminal = new Terminal();
+                sTerminal.terminal_id = sTerminalItem;
+
+                sRequestDevolucion.terminals_list.Add(sTerminal);
+            }
+
+            sRequestDevolucion.Parametro_original = xModel;
+
+            RequestDevolucionMin sRequestDevolucionMin = new RequestDevolucionMin();
+            sRequestDevolucionMin.subnet_acquirer_id = sRequestDevolucion.subnet_acquirer_id;
+            sRequestDevolucionMin.terminal_menu_text = sRequestDevolucion.terminal_menu_text;
+            sRequestDevolucionMin.refund_amount = xModel.Importe.ToString();
+            sRequestDevolucionMin.card_brand_product = xModel.Marca_tarjeta.ContainValueString() ? xModel.Marca_tarjeta : null;
+            sRequestDevolucionMin.print_copies = sRequestDevolucion.print_copies;
+            sRequestDevolucionMin.terminals_list = sRequestDevolucion.terminals_list;
+
+            EnviarSolicitudService<RequestDevolucionMin, RequestDevolucion>(CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION, "/refunds", "cuit_cuil=" + xModel.Cuit_cuil, sRequestDevolucionMin, sRequestDevolucion);
+        }
+
+        private void EnviarConsultaEstadoDevolucion(RequestDevolucion xModel)
+        {
+            int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
+
+            //if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
+            //{
+            //    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_401, "Error: Tiempo de persistencia agotado", true));
+            //    ConsultaEstadoEnProceso = false;
+
+            //    return;
+            //}
+
+            //Reversal_data sReversalData = xModel.reversal_data;
+
+            ConsultaEstado sConsultaEstado = new ConsultaEstado();
+            //sConsultaEstado.Pago_id = sReversalData.payment_id;
+            sConsultaEstado.Referencia = xModel.subnet_acquirer_id;
+            sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
+
+            EnviarConsultaEstadoService<RequestDevolucion, RequestDevolucion>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION, "/refunds/{refund_id}", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+        }
+
+        private void EnviarCancelacionDevolucion(RequestDevolucion xModel)
+        {
+            //Reversal_data sReversalData = xModel.reversal_data;
+
+            ConsultaEstado sConsultaEstado = new ConsultaEstado();
+            //sConsultaEstado.Pago_id = sReversalData.payment_id;
+            sConsultaEstado.Referencia = xModel.subnet_acquirer_id;
+            sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
+
+            EnviarCancelacionPutService<RequestDevolucion, RequestDevolucion>(CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION, "/refunds/{refund_id}/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
+        }
+
+        public void EnviarCancelacionDevolucion()
+        {
+            EnviarCancelacionDevolucion(_requestDevolucion);
+        }
+
+        public void ReiniciarConsultaEstadoDevolucion()
+        {
+            if (ConsultaEstadoEnProceso)
+            {
+                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.PROCESO_EN_EJECUCION, "El proceso de consulta anterior esta en ejecucion", true));
+                return;
+            }
+
+            ConsultaEstadoEnProceso = true;
+            EnviarConsultaEstadoDevolucion(_requestDevolucion);
         }
 
         //public async Task GenerarToken()
