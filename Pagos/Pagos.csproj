@@ -90,6 +90,9 @@
     <Compile Include="Pasarela\TipoPasarela\PagoBase.cs" />
     <Compile Include="Pago.cs" />
     <Compile Include="Pasarela\TipoPasarela\PagoFactory.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\Refund_data.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\ResponseConsultaDevolucion.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\ResponseDevolucion.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Enums.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Errors.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Pago\RequestPagoMin.cs" />

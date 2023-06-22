@@ -323,5 +323,52 @@ namespace Test
         {
             sReversion.EnviarCancelacionReversion();
         }
+
+        IDevoluciones sDevolucion;
+        private void button8_Click(object sender, EventArgs e)
+        {
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            sConfiguracion.Id_terminales = new List<string>();
+            sConfiguracion.Id_terminales.Add("asd123");
+            sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
+            sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_refunds";
+            sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            sConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            sConfiguracion.Tiempo_segundos_persistencias = 500;
+            //sConfiguracion.Key = "";
+
+            sDevolucion = new Pago(sConfiguracion);
+
+            sDevolucion.OnRespuesta += Respuesta;
+
+            SolicitudDevolucion sSolicitudDevolucion = new SolicitudDevolucion()
+            {
+                Cuit_cuil = "20-34146568-1",
+                Importe = 120000,
+                Nombre_integrador = "ECR",
+                Nombre_sistema_integrador = "Software x",
+                Version_sistema_integrador = "3.5",
+                Texto_terminal = "Pago devolucion x 26",
+                Referencia = "987654",
+                Cuotas = 1,
+                Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
+                Nota_impresion_ticket = "nota impresa en el ticket",
+                Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
+                Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
+                Admite_tarjeta_beneficio = true,
+                Pago_id = "4934ba4e-d375-4848-b73b-9501286cc0d4"
+            };
+
+            sSolicitudDevolucion.Lista_terminales = new List<string>();
+            sSolicitudDevolucion.Lista_terminales.Add("38011128");
+
+            sDevolucion.EnviarSolicitudDevolucion(sSolicitudDevolucion);
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            sDevolucion.EnviarCancelacionDevolucion();
+        }
     }
 }

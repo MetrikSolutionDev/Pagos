@@ -43,6 +43,17 @@ namespace Pagos.Pasarela.PrismaModel
             ERROR
         }
 
+        public enum RefundStatus
+        {
+            REFUND_REQUEST,
+            PROCESSING_REFUND,
+            CONFIRMED,
+            UNDO_REQUEST,
+            DECLINED,
+            UNDONE,
+            ERROR
+        }
+
         public enum ReversalStatus
         {
             REVERSAL_REQUEST,

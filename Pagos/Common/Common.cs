@@ -36,7 +36,9 @@ namespace Pagos
             CANCELACION_REVERSION,
             SOLICITUD_DEVOLUCION,
             CONSULTA_ESTADO_DEVOLUCION,
-            CANCELACION_DEVOLUCION
+            CANCELACION_DEVOLUCION,
+            SOLICITUD_CIERRE,
+            CONSULTA_ESTADO_CIERRE
         }
 
         public enum Tipo
