@@ -21,5 +21,7 @@ namespace Pagos
         /// Cancela la intencion de devolcuion
         /// </summary>
         void EnviarCancelacionDevolucion();
+
+        void EnviarCancelacionDevolucion(Cancelacion xModel);
     }
 }

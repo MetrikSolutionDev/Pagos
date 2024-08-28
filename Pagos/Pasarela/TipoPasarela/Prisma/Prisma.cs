@@ -1,27 +1,17 @@
-﻿using Core.Api;
-using Core.Api.Authentication;
-using Core.Business;
-using Core.Data;
+﻿using Core.Business;
 using Pagos.Pasarela.Eventos;
 using Pagos.Pasarela.PrismaModel;
+using Pagos.Pasarela.TipoPasarela.Prisma.Model.Cierre;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection.Emit;
-using System.Security.Policy;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
-using System.Xml.Linq;
 
 namespace Pagos.Pasarela
 {
-    public class Prisma : PagoBase, IPago, IPagoHandler, IAutenticacion
+    public class Prisma : PagoBase, IPago, IPagoHandler
     {
         private RequestPago _requestPago;
         private ResponseCierre _requestCierre;
@@ -30,6 +20,25 @@ namespace Pagos.Pasarela
 
         public Prisma(Configuracion xConfiguracion)
         {
+            if (xConfiguracion.Entorno == CommonPago.TipoEntorno.PRODUCCION)
+            {
+                //PRODUCCION
+                xConfiguracion.End_point = "https://api.prismamediosdepago.com";
+                xConfiguracion.Key = "OWE0ZmNiYTItNzAzYS00MzM2LWIyZjUtNTRhMjY1OGFjMGU3OmVmMDBlMjhjLWE1MjYtNDg4Yi1hM2ExLWY1OGEwOTVjMDVlYw ==";
+            }
+
+            if (xConfiguracion.Entorno == CommonPago.TipoEntorno.HOMOLOGACION)
+            {
+                //HOMOLOGACION
+                xConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
+                xConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
+            }
+
+            xConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_payments";
+            xConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            
+            xConfiguracion.Tiempo_segundos_persistencias = 500;
+
             _configuracion = xConfiguracion;
             SetClient();
 
@@ -56,7 +65,7 @@ namespace Pagos.Pasarela
             {
                 if (xList.Any(er => er.status == "401"))
                 {
-                    if (xNroIntento < 3)
+                    if (xNroIntento < 10)
                     {
                         RenovarToken(xParametroOriginal, xTipo);
                     }
@@ -75,7 +84,7 @@ namespace Pagos.Pasarela
 
                 if (xList.Any(er => er.status == "404"))
                 {
-                    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_404, "Error: Pago no encontrado", true));
+                    OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ERROR_404, "Error: Registro no encontrado", true));
                 }
 
                 if (xList.Any(er => er.status == "409"))
@@ -121,7 +130,7 @@ namespace Pagos.Pasarela
                             break;
 
                         case CommonPago.TipoRespuestaEvento.CANCELACION_PAGO:
-                            EnviarCancelacionPago((RequestPago)e.ParametroOriginal);
+                            EnviarCancelacionPago((Cancelacion)e.ParametroOriginal);
                             break;
 
                         case CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION:
@@ -135,7 +144,7 @@ namespace Pagos.Pasarela
                             break;
 
                         case CommonPago.TipoRespuestaEvento.CANCELACION_REVERSION:
-                            EnviarCancelacionReversion((RequestReversion)e.ParametroOriginal);
+                            EnviarCancelacionReversion((Cancelacion)e.ParametroOriginal);
                             break;
 
                         case CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION:
@@ -149,7 +158,7 @@ namespace Pagos.Pasarela
                             break;
 
                         case CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION:
-                            EnviarCancelacionDevolucion((ResponseDevolucion)e.ParametroOriginal);
+                            EnviarCancelacionDevolucion((Cancelacion)e.ParametroOriginal);
                             break;
 
                         case CommonPago.TipoRespuestaEvento.SOLICITUD_CIERRE:
@@ -231,7 +240,7 @@ namespace Pagos.Pasarela
                         switch (sPaymentDataReturn.payment_status) 
                         {
                             case Enums.PaymentStatus.PAYMENT_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito", false, true, true));
 
                                 sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
 
@@ -239,7 +248,7 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.PaymentStatus.PROCESSING_PAYMENT:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando pago"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando pago", false, true, false));
 
                                 sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
 
@@ -247,7 +256,7 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.PaymentStatus.WAITING_CONFIRMATION:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Esperando confirmacion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Esperando confirmacion", false, true, false));
 
                                 sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
 
@@ -255,7 +264,7 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.PaymentStatus.CONFIRM_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud de confirmacion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud de confirmacion", false, true, false));
 
                                 sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
 
@@ -263,13 +272,13 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.PaymentStatus.UNDO_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud", false, false, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.PaymentStatus.PROCESSING_CONFIRMATION:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando confirmacion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando confirmacion", false, true, false));
 
                                 sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
 
@@ -277,38 +286,77 @@ namespace Pagos.Pasarela
                                 break;
 
                             case Enums.PaymentStatus.PROCESSING_UNDO:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento", false, false, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.PaymentStatus.CONFIRMED:
+
                                 DatosRespuestaPago sDatosRespuestaPago = new DatosRespuestaPago();
+                                sDatosRespuestaPago.Descripcion_tarjeta = "";
+                                sDatosRespuestaPago.Tarjeta = "";
+
+                                List<EquivalenciaTarjeta> sList = Pago.ReadEquivalencias();
+
+                                if (sList != null && sList.Any(a => a.Codigo == sPaymentDataReturn.card_brand_product))
+                                {
+                                    EquivalenciaTarjeta sItem = sList.Where(a => a.Codigo == sPaymentDataReturn.card_brand_product).First();
+
+                                    sDatosRespuestaPago.Descripcion_tarjeta = sItem.Descripcion;
+                                    sDatosRespuestaPago.Tarjeta = sItem.Codigo;
+                                }
+                                else 
+                                {
+                                    if (sList != null && sList.Count() > 0)
+                                    {
+                                        EquivalenciaTarjeta sItem = sList.First();
+
+                                        sDatosRespuestaPago.Descripcion_tarjeta = sItem.Descripcion;
+                                        sDatosRespuestaPago.Tarjeta = sItem.Codigo;
+                                    }
+                                }
+                                
                                 sDatosRespuestaPago.Nro_cupon = sPaymentDataReturn.transaction_receipt.ToString();
                                 sDatosRespuestaPago.Nro_lote = sPaymentDataReturn.batch_number.ToString();
                                 sDatosRespuestaPago.Nro_terminal = sPaymentDataReturn.terminal_id;
-                                sDatosRespuestaPago.Descripcion_tarjeta = sPaymentDataReturn.card_brand;
-                                sDatosRespuestaPago.Tarjeta = sPaymentDataReturn.card_brand_product;
 
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago confirmado", sDatosRespuestaPago));
+                                switch (sPaymentDataReturn.payment_type)
+                                {
+                                    case "CREDIT":
+                                        sDatosRespuestaPago.Tipo_tarjeta = "CREDITO";
+                                        break;
+
+                                    case "DEBIT":
+                                        sDatosRespuestaPago.Tipo_tarjeta = "DEBITO";
+                                        break;
+
+                                    default:
+                                        sDatosRespuestaPago.Tipo_tarjeta = "CREDITO";
+                                        break;
+                                }
+                                
+                                //sDatosRespuestaPago.Tipo_tarjeta = sPaymentDataReturn.payment_type;
+
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago confirmado", sDatosRespuestaPago, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.PaymentStatus.DECLINED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago rechazado"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago rechazado", true, false, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.PaymentStatus.UNDONE:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago deshecho"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago deshecho", false, false, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.PaymentStatus.ERROR:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento del pago"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento del pago", true, false, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
@@ -319,12 +367,12 @@ namespace Pagos.Pasarela
 
                 case CommonPago.TipoRespuestaEvento.CANCELACION_PAGO:
                     RequestPago sRespuestaCancelacionPago = (RequestPago)e.Respuesta;
-                    RequestPago sParametroOriginalCancelacionPago = (RequestPago)e.ParametroOriginal;
+                    Cancelacion sParametroOriginalCancelacionPago = (Cancelacion)e.ParametroOriginal;
                     sParametroOriginalCancelacionPago.Parametro_original.Nro_intento_generacion_token++;
 
                     if (sRespuestaCancelacionPago.errors != null)
                     {
-                        Errores<RequestPago>(sRespuestaCancelacionPago.errors, CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, sParametroOriginalCancelacionPago, sParametroOriginalCancelacionPago.Parametro_original.Nro_intento_generacion_token);
+                        Errores<Cancelacion>(sRespuestaCancelacionPago.errors, CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, sParametroOriginalCancelacionPago, sParametroOriginalCancelacionPago.Parametro_original.Nro_intento_generacion_token);
                     }
                     else
                     {
@@ -410,11 +458,11 @@ namespace Pagos.Pasarela
                         sParametroOriginalSolicitudReversion.Nro_persistencia = 1;
                         sParametroOriginalSolicitudReversion.Inicio_persistencia = DateTime.UtcNow.AddHours(-3);
 
-                        _requestReversion = sRespuestaSolicitudReversion;
-
                         ConsultaEstadoEnProceso = true;
 
                         sRespuestaSolicitudReversion.Parametro_original = sParametroOriginalSolicitudReversion.Parametro_original;
+
+                        _requestReversion = sRespuestaSolicitudReversion;
 
                         EnviarConsultaEstadoReversion(sRespuestaSolicitudReversion);
                     }
@@ -439,53 +487,53 @@ namespace Pagos.Pasarela
                         switch (sReversalDataReturn.reversal_status)
                         {
                             case Enums.ReversalStatus.REVERSAL_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito", false, true, true));
 
                                 EnviarConsultaEstadoReversion(sParametroOriginalConsultaEstadoReversion);
                                 break;
 
                             case Enums.ReversalStatus.PROCESSING_REVERSAL:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando devolucion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando reversion", false, true, false));
 
                                 EnviarConsultaEstadoReversion(sParametroOriginalConsultaEstadoReversion);
                                 break;
 
                             case Enums.ReversalStatus.REVERSED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago devuelto"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago devuelto", false, true, false, true));
 
                                 break;
 
                             case Enums.ReversalStatus.REVERSAL_UNDONE:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Reversion deshecha"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Reversion deshecha", false, true, false));
 
                                 break;
 
                             case Enums.ReversalStatus.UNDO_REVERSAL_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.ReversalStatus.PROCESSING_UNDO_REVERSAL:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.ReversalStatus.REVERSAL_DECLINED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion rechazada"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion rechazada", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.ReversalStatus.UNDO_REVERSAL_DECLINED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer revolucion rechazada"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer revolucion rechazada", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.ReversalStatus.REVERSAL_ERROR:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento de la devolucion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento de la devolucion", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
@@ -577,14 +625,14 @@ namespace Pagos.Pasarela
                         sParametroOriginalSolicitudDevolucion.Nro_persistencia = 1;
                         sParametroOriginalSolicitudDevolucion.Inicio_persistencia = DateTime.UtcNow.AddHours(-3);
 
-                        _requestDevolucion = sRespuestaSolicitudDevolucion;
-
                         ConsultaEstadoEnProceso = true;
 
                         sRespuestaSolicitudDevolucion.Parametro_original = sParametroOriginalSolicitudDevolucion.Parametro_original;
                         sRespuestaSolicitudDevolucion.refund_request = new RequestDevolucion();
                         sRespuestaSolicitudDevolucion.refund_request.subnet_acquirer_id = sParametroOriginalSolicitudDevolucion.subnet_acquirer_id;
-                        
+
+                        _requestDevolucion = sRespuestaSolicitudDevolucion;
+
                         EnviarConsultaEstadoDevolucion(sRespuestaSolicitudDevolucion);
                     }
 
@@ -608,42 +656,42 @@ namespace Pagos.Pasarela
                         switch (sRefundDataReturn.refund_status)
                         {
                             case Enums.RefundStatus.REFUND_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito", false, true, true));
 
                                 EnviarConsultaEstadoDevolucion(sParametroOriginalConsultaEstadoDevolucion);
                                 break;
 
                             case Enums.RefundStatus.PROCESSING_REFUND:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando devolucion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando devolucion", false, true, false));
 
                                 EnviarConsultaEstadoDevolucion(sParametroOriginalConsultaEstadoDevolucion);
                                 break;
 
                             case Enums.RefundStatus.CONFIRMED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion realizada"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion realizada", false, true, false, true));
 
                                 break;
 
                             case Enums.RefundStatus.UNDO_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.RefundStatus.DECLINED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion rechazada"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion rechazada", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.RefundStatus.UNDONE:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion Cancelada"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Devolucion Cancelada", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
                             case Enums.RefundStatus.ERROR:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento de la devolucion"));
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento de la devolucion", false, true, false));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
@@ -737,109 +785,52 @@ namespace Pagos.Pasarela
                     break;
 
                 case CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_CIERRE:
-                    RequestPago sRespuestaConsultaEstadoPago = (RequestPago)e.Respuesta;
-                    RequestPago sParametroOriginalConsultaEstadoPago = (RequestPago)e.ParametroOriginal;
-                    sParametroOriginalConsultaEstadoPago.Parametro_original.Nro_intento_generacion_token++;
+                    ResponseCierre sRespuestaConsultaEstadoCierre = (ResponseCierre)e.Respuesta;
+                    ResponseCierre sParametroOriginalConsultaEstadoCierre = (ResponseCierre)e.ParametroOriginal;
+                    sParametroOriginalConsultaEstadoCierre.Parametro_original.Nro_intento_generacion_token++;
 
-                    if (sRespuestaConsultaEstadoPago.errors != null)
+                    if (sRespuestaConsultaEstadoCierre.errors != null)
                     {
-                        Errores<RequestPago>(sRespuestaConsultaEstadoPago.errors, CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, sParametroOriginalConsultaEstadoPago, sParametroOriginalConsultaEstadoPago.Parametro_original.Nro_intento_generacion_token);
+                        Errores<ResponseCierre>(sRespuestaConsultaEstadoCierre.errors, CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, sParametroOriginalConsultaEstadoCierre, sParametroOriginalConsultaEstadoCierre.Parametro_original.Nro_intento_generacion_token);
 
                         ConsultaEstadoEnProceso = false;
                     }
                     else
                     {
-                        //OnRespuesta(this, new RespuestaEventArgs(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "Solicitud enviada con exito"));
+                        Settlements_data sSettlementsDataReturn = sRespuestaConsultaEstadoCierre.settlements_data;
 
-                        ////TEMPORAL PRUEBA
-                        //sRespuestaConsultaEstadoPago = new RequestPago();
-                        //sRespuestaConsultaEstadoPago.payment_data = new Payment_data();
-                        //sRespuestaConsultaEstadoPago.payment_data.payment_id = "jsdfsdakbfjfjd";
-                        //sRespuestaConsultaEstadoPago.payment_data.payment_status = Enums.PaymentStatus.PAYMENT_REQUEST;
-
-                        Payment_data sPaymentDataReturn = sRespuestaConsultaEstadoPago.payment_data;
-
-                        switch (sPaymentDataReturn.payment_status)
+                        switch (sSettlementsDataReturn.settlement_status)
                         {
-                            case Enums.PaymentStatus.PAYMENT_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito"));
+                            case Enums.SettlemnetsStatus.SETTLEMENT_REQUEST:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud recibida con exito", false, false, true));
 
-                                sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
+                                sParametroOriginalConsultaEstadoCierre.Nro_persistencia++;
 
-                                EnviarConsultaEstadoPago(sParametroOriginalConsultaEstadoPago);
+                                EnviarConsultaEstadoCierre(sParametroOriginalConsultaEstadoCierre);
                                 break;
 
-                            case Enums.PaymentStatus.PROCESSING_PAYMENT:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando pago"));
+                            case Enums.SettlemnetsStatus.PROCESSING_SETTLEMENT:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando cierre"));
 
-                                sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
+                                sParametroOriginalConsultaEstadoCierre.Nro_persistencia++;
 
-                                EnviarConsultaEstadoPago(sParametroOriginalConsultaEstadoPago);
+                                EnviarConsultaEstadoCierre(sParametroOriginalConsultaEstadoCierre);
                                 break;
 
-                            case Enums.PaymentStatus.WAITING_CONFIRMATION:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Esperando confirmacion"));
-
-                                sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
-
-                                EnviarConsultaEstadoPago(sParametroOriginalConsultaEstadoPago);
-                                break;
-
-                            case Enums.PaymentStatus.CONFIRM_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Solicitud de confirmacion"));
-
-                                sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
-
-                                EnviarConsultaEstadoPago(sParametroOriginalConsultaEstadoPago);
-                                break;
-
-                            case Enums.PaymentStatus.UNDO_REQUEST:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer solicitud"));
+                            case Enums.SettlemnetsStatus.CONFIRMED:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Cierre confirmado", false, false, false, true));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
-                            case Enums.PaymentStatus.PROCESSING_CONFIRMATION:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Procesando confirmacion"));
-
-                                sParametroOriginalConsultaEstadoPago.Nro_persistencia++;
-
-                                EnviarConsultaEstadoPago(sParametroOriginalConsultaEstadoPago);
-                                break;
-
-                            case Enums.PaymentStatus.PROCESSING_UNDO:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Deshacer procesamiento"));
+                            case Enums.SettlemnetsStatus.DECLINED:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Cierre rechazado"));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
 
-                            case Enums.PaymentStatus.CONFIRMED:
-                                DatosRespuestaPago sDatosRespuestaPago = new DatosRespuestaPago();
-                                sDatosRespuestaPago.Nro_cupon = sPaymentDataReturn.transaction_receipt.ToString();
-                                sDatosRespuestaPago.Nro_lote = sPaymentDataReturn.batch_number.ToString();
-                                sDatosRespuestaPago.Nro_terminal = sPaymentDataReturn.terminal_id;
-                                sDatosRespuestaPago.Descripcion_tarjeta = sPaymentDataReturn.card_brand;
-                                sDatosRespuestaPago.Tarjeta = sPaymentDataReturn.card_brand_product;
-
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago confirmado", sDatosRespuestaPago));
-                                ConsultaEstadoEnProceso = false;
-
-                                break;
-
-                            case Enums.PaymentStatus.DECLINED:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago rechazado"));
-                                ConsultaEstadoEnProceso = false;
-
-                                break;
-
-                            case Enums.PaymentStatus.UNDONE:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Pago deshecho"));
-                                ConsultaEstadoEnProceso = false;
-
-                                break;
-
-                            case Enums.PaymentStatus.ERROR:
-                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento del pago"));
+                            case Enums.SettlemnetsStatus.ERROR:
+                                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, "Error durante el procesamiento del cierre"));
                                 ConsultaEstadoEnProceso = false;
 
                                 break;
@@ -867,6 +858,8 @@ namespace Pagos.Pasarela
 
         private void EnviarConsultaEstadoPago(RequestPago xModel)
         {
+            Thread.Sleep(500);
+
             //PersistirConsultaPago(ConsultaEstadoPagoPersistente, xModel, ref OnRespuestaPago);
 
             //return true;
@@ -888,7 +881,7 @@ namespace Pagos.Pasarela
             sConsultaEstado.Referencia = xModel.payment_request_data.subnet_acquirer_id;
             sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
 
-            EnviarConsultaEstadoService<RequestPago, RequestPago>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "/payments/" + sConsultaEstado.Pago_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            EnviarConsultaEstadoService<RequestPago, RequestPago>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "/v1/paystore_terminals/terminal_payments", "/payments/" + sConsultaEstado.Pago_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
         }
 
         public void ReiniciarConsultaEstadoPago()
@@ -903,21 +896,81 @@ namespace Pagos.Pasarela
             EnviarConsultaEstadoPago(_requestPago);
         }
 
-        private void EnviarCancelacionPago(RequestPago xModel)
+        public void EnviarCancelacionPago(Cancelacion xModel)
         {
-            Payment_data sPaymentData = xModel.payment_data;
+            RequestPago sModel = new RequestPago();
+            sModel.payment_data = new Payment_data();
+            sModel.payment_data.payment_id = xModel.Pago_id;
+            sModel.payment_request_data = new Payment_request_data();
+
+            switch (xModel.Entorno)
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sModel.payment_request_data.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sModel.payment_request_data.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sModel.payment_request_data.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sModel.payment_request_data.subnet_acquirer_id = "2";
+                    break;
+            }
+
+            sModel.Parametro_original = new SolicitudPago();
+            sModel.Parametro_original.Cuit_cuil = xModel.Cuit_cuil;
+
+            Payment_data sPaymentData = sModel.payment_data;
 
             ConsultaEstado sConsultaEstado = new ConsultaEstado();
             sConsultaEstado.Pago_id = sPaymentData.payment_id;
-            sConsultaEstado.Referencia = xModel.payment_request_data.subnet_acquirer_id;
-            sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
+            sConsultaEstado.Referencia = sModel.payment_request_data.subnet_acquirer_id;
+            sConsultaEstado.Cuit_cuil = sModel.Parametro_original.Cuit_cuil;
 
-            EnviarCancelacionPutService<RequestPago, RequestPago>(CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, "/payments/" + sConsultaEstado.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            xModel.Parametro_original = xModel;
+
+            if (sPaymentData.payment_id.ContainValueString())
+            {
+                EnviarCancelacionPutService<Cancelacion, RequestPago>(CommonPago.TipoRespuestaEvento.CANCELACION_PAGO, "/v1/paystore_terminals/terminal_payments", "/payments/" + sConsultaEstado.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            }
+            else 
+            {
+                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.CANCELACION_PAGO, "No hay pago para cancelar"));
+            }
         }
 
         public void EnviarCancelacionPago() 
         {
-            EnviarCancelacionPago(_requestPago);
+            Cancelacion sCancelacionPago = new Cancelacion();
+            sCancelacionPago.Cuit_cuil = _requestPago.Parametro_original.Cuit_cuil;
+
+            switch (_requestPago.payment_request_data.subnet_acquirer_id)
+            {
+                case "1":
+                    sCancelacionPago.Entorno = CommonPago.TipoEntorno.PRUEBA;
+                    break;
+
+                case "9":
+                    sCancelacionPago.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+                    break;
+
+                case "2":
+                    sCancelacionPago.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+                    break;
+
+                default:
+                    sCancelacionPago.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+                    break;
+            }
+
+            sCancelacionPago.Pago_id = _requestPago.payment_data.payment_id;
+
+            EnviarCancelacionPago(sCancelacionPago);
         }
 
         public void EnviarSolicitudPago(SolicitudPago xModel)
@@ -1034,11 +1087,26 @@ namespace Pagos.Pasarela
             RequestPagoMin sRequestPagoMin = new RequestPagoMin();
             sRequestPagoMin.payment_request_data = sRequestPago.payment_request_data;
 
-            EnviarSolicitudService<RequestPagoMin, RequestPago>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, "/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPagoMin, sRequestPago);
+            EnviarSolicitudService<RequestPagoMin, RequestPago>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, "/v1/paystore_terminals/terminal_payments", "/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPagoMin, sRequestPago);
 
             //RequestPago sReturn = await _client.PostAsync<RequestPago, RequestPago>("/payments", "cuit_cuil=" + xModel.Cuit_cuil, sRequestPago);
 
             //var sReturn = _client.PostAsync<RequestPago, RequestPago>("/payments/cuit_cuil?" + xModel.Cuit_cuil, sHttpContent).Result;
+        }
+
+        public static async Task<string> RenovarTokenSync()
+        {
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            sConfiguracion.Tiempo_segundos_persistencias = 500;
+            
+            Prisma sPrisma = new Prisma(sConfiguracion);            
+            
+            //API METODO PARA RENOVAR TOKEN
+            TokenResponse sReturn = await sPrisma.GenerarTokenSync<TokenResponse>("", "/v1/oauth/accesstoken", "grant_type=client_credentials");
+
+            return sReturn.access_token;
         }
 
         public void RenovarToken()
@@ -1093,7 +1161,7 @@ namespace Pagos.Pasarela
             };
 
             sSolicitudReversion.Lista_terminales = new List<string>();
-            sSolicitudReversion.Lista_terminales.Add("38011127");
+            sSolicitudReversion.Lista_terminales.Add("38011128");
 
             return await sPrisma.EnviarSolicitudReversionAsync(sSolicitudReversion);
 
@@ -1249,11 +1317,13 @@ namespace Pagos.Pasarela
             RequestReversionMin sRequestReversionMin = new RequestReversionMin();
             sRequestReversionMin.reversal_request_data = sRequestReversion.reversal_request_data;
 
-            EnviarSolicitudService<RequestReversionMin, RequestReversion>(CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION, "/reversals", "cuit_cuil=" + xModel.Cuit_cuil, sRequestReversionMin, sRequestReversion);
+            EnviarSolicitudService<RequestReversionMin, RequestReversion>(CommonPago.TipoRespuestaEvento.SOLICITUD_REVERSION, "/v1/paystore_terminals/terminal_reversals", "/reversals", "cuit_cuil=" + xModel.Cuit_cuil, sRequestReversionMin, sRequestReversion);
         }
 
         private void EnviarConsultaEstadoReversion(RequestReversion xModel)
         {
+            Thread.Sleep(500);
+
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
             //if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
@@ -1271,24 +1341,84 @@ namespace Pagos.Pasarela
             sConsultaEstado.Referencia = xModel.reversal_request_data.subnet_acquirer_id;
             sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
 
-            EnviarConsultaEstadoService<RequestReversion, RequestReversion>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_REVERSION, "/reversals/" + sConsultaEstado.Pago_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            EnviarConsultaEstadoService<RequestReversion, RequestReversion>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_REVERSION, "/v1/paystore_terminals/terminal_reversals", "/reversals/" + sConsultaEstado.Pago_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
         }
 
-        private void EnviarCancelacionReversion(RequestReversion xModel)
+        public void EnviarCancelacionReversion(Cancelacion xModel)
         {
-            Reversal_data sReversalData = xModel.reversal_data;
+            RequestReversion sModel = new RequestReversion();
+            sModel.reversal_data = new Reversal_data();
+            sModel.reversal_data.payment_id = xModel.Pago_id;
+            sModel.reversal_request_data = new Reversal_request_data();
+
+            switch (xModel.Entorno)
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sModel.reversal_request_data.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sModel.reversal_request_data.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sModel.reversal_request_data.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sModel.reversal_request_data.subnet_acquirer_id = "2";
+                    break;
+            }
+
+            sModel.Parametro_original = new SolicitudReversion();
+            sModel.Parametro_original.Cuit_cuil = xModel.Cuit_cuil;
+
+            Reversal_data sReversalData = sModel.reversal_data;
 
             ConsultaEstado sConsultaEstado = new ConsultaEstado();
             sConsultaEstado.Pago_id = sReversalData.payment_id;
-            sConsultaEstado.Referencia = xModel.reversal_request_data.subnet_acquirer_id;
-            sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
+            sConsultaEstado.Referencia = sModel.reversal_request_data.subnet_acquirer_id;
+            sConsultaEstado.Cuit_cuil = sModel.Parametro_original.Cuit_cuil;
 
-            EnviarCancelacionPutService<RequestReversion, RequestReversion>(CommonPago.TipoRespuestaEvento.CANCELACION_REVERSION, "/reversals/" + sConsultaEstado.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
+            xModel.Parametro_original = xModel;
+
+            if (sReversalData.payment_id.ContainValueString())
+            {
+                EnviarCancelacionPutService<Cancelacion, RequestReversion>(CommonPago.TipoRespuestaEvento.CANCELACION_REVERSION, "/v1/paystore_terminals/terminal_reversals", "/reversals/" + sConsultaEstado.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
+            }
+            else
+            {
+                OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.CANCELACION_PAGO, "No hay reversion para cancelar"));
+            }
         }
 
         public void EnviarCancelacionReversion()
         {
-            EnviarCancelacionReversion(_requestReversion);
+            Cancelacion sCancelacion = new Cancelacion();
+            sCancelacion.Cuit_cuil = _requestReversion.Parametro_original.Cuit_cuil;
+
+            switch (_requestReversion.reversal_request_data.subnet_acquirer_id)
+            {
+                case "1":
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.PRUEBA;
+                    break;
+
+                case "9":
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+                    break;
+
+                case "2":
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+                    break;
+
+                default:
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+                    break;
+            }
+
+            sCancelacion.Pago_id = _requestReversion.reversal_data.payment_id;
+
+            EnviarCancelacionReversion(sCancelacion);
         }
 
         public void ReiniciarConsultaEstadoReversion()
@@ -1389,11 +1519,13 @@ namespace Pagos.Pasarela
             sRequestDevolucionMin.print_copies = sRequestDevolucion.print_copies;
             sRequestDevolucionMin.terminals_list = sRequestDevolucion.terminals_list;
 
-            EnviarSolicitudService<RequestDevolucionMin, ResponseDevolucion>(CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION, "/refunds", "cuit_cuil=" + xModel.Cuit_cuil, sRequestDevolucionMin, sRequestDevolucion);
+            EnviarSolicitudService<RequestDevolucionMin, ResponseDevolucion>(CommonPago.TipoRespuestaEvento.SOLICITUD_DEVOLUCION, "/v1/paystore_terminals/terminal_refunds", "/refunds", "cuit_cuil=" + xModel.Cuit_cuil, sRequestDevolucionMin, sRequestDevolucion);
         }
 
         private void EnviarConsultaEstadoDevolucion(ResponseDevolucion xModel)
         {
+            Thread.Sleep(500);
+
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
             //if (DateTime.Compare(xModel.Inicio_persistencia.AddSeconds(sSegundosPersistencia), DateTime.UtcNow.AddHours(-3)) < 0)
@@ -1410,24 +1542,75 @@ namespace Pagos.Pasarela
             sConsultaEstado.Referencia = xModel.refund_request.subnet_acquirer_id;
             sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
 
-            EnviarConsultaEstadoService<ResponseDevolucion, ResponseConsultaDevolucion>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION, "/refunds/" + xModel.refund_data.refund_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            EnviarConsultaEstadoService<ResponseDevolucion, ResponseConsultaDevolucion>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION, "/v1/paystore_terminals/terminal_refunds", "/refunds/" + xModel.refund_data.refund_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
         }
 
-        private void EnviarCancelacionDevolucion(ResponseDevolucion xModel)
+        public void EnviarCancelacionDevolucion(Cancelacion xModel)
         {
+            ResponseDevolucion sModel = new ResponseDevolucion();
+            sModel.refund_request = new RequestDevolucion();
+            sModel.refund_data = new Refund_data();
+
+            switch (xModel.Entorno)
+            {
+                case CommonPago.TipoEntorno.PRUEBA:
+                    sModel.refund_request.subnet_acquirer_id = "1";
+                    break;
+
+                case CommonPago.TipoEntorno.HOMOLOGACION:
+                    sModel.refund_request.subnet_acquirer_id = "9";
+                    break;
+
+                case CommonPago.TipoEntorno.PRODUCCION:
+                    sModel.refund_request.subnet_acquirer_id = "2";
+                    break;
+
+                default:
+                    sModel.refund_request.subnet_acquirer_id = "2";
+                    break;
+            }
+
+            sModel.Parametro_original = new SolicitudDevolucion();
+            sModel.Parametro_original.Cuit_cuil = xModel.Cuit_cuil;
+
             //Reversal_data sReversalData = xModel.reversal_data;
 
             ConsultaEstado sConsultaEstado = new ConsultaEstado();
             //sConsultaEstado.Pago_id = sReversalData.payment_id;
-            sConsultaEstado.Referencia = xModel.refund_request.subnet_acquirer_id;
-            sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
+            sConsultaEstado.Referencia = sModel.refund_request.subnet_acquirer_id;
+            sConsultaEstado.Cuit_cuil = sModel.Parametro_original.Cuit_cuil;
 
-            EnviarCancelacionPutService<ResponseDevolucion, ResponseConsultaDevolucion>(CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION, "/refunds/" + xModel.refund_data.refund_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
+            //EnviarCancelacionPutService<ResponseDevolucion, ResponseConsultaDevolucion>(CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION, "/refunds/" + sModel.refund_data.refund_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
+            EnviarCancelacionPutService<Cancelacion, ResponseConsultaDevolucion>(CommonPago.TipoRespuestaEvento.CANCELACION_DEVOLUCION, "/v1/paystore_terminals/terminal_refunds", "/refunds/" + xModel.Pago_id + "/cancellations", "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil + "&Nota", xModel);
         }
 
         public void EnviarCancelacionDevolucion()
         {
-            EnviarCancelacionDevolucion(_requestDevolucion);
+            Cancelacion sCancelacion = new Cancelacion();
+            sCancelacion.Cuit_cuil = _requestDevolucion.Parametro_original.Cuit_cuil;
+
+            switch (_requestDevolucion.refund_request.subnet_acquirer_id)
+            {
+                case "1":
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.PRUEBA;
+                    break;
+
+                case "9":
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+                    break;
+
+                case "2":
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+                    break;
+
+                default:
+                    sCancelacion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+                    break;
+            }
+
+            sCancelacion.Pago_id = _requestDevolucion.refund_data.refund_id;
+
+            EnviarCancelacionDevolucion(sCancelacion);
         }
 
         public void ReiniciarConsultaEstadoDevolucion()
@@ -1475,20 +1658,21 @@ namespace Pagos.Pasarela
 
             sRequestCierre.Parametro_original = xModel;
 
-            EnviarSolicitudService<object, ResponseCierre>(CommonPago.TipoRespuestaEvento.SOLICITUD_CIERRE, "/settlements", "cuit_cuil=" + xModel.Cuit_cuil + "&subnet_acquirer_id=" + sRequestCierre.subnet_acquirer_id + "&terminal_id=" + xModel.Terminal +"&print_receipt=" + sRequestCierre.print_receipt, new object(), sRequestCierre);
+            sRequestCierre.print_receipt = "false";
+
+            if (xModel.Imprimir_comprobante)
+                sRequestCierre.print_receipt = "true";
+
+            EnviarSolicitudService<object, ResponseCierre>(CommonPago.TipoRespuestaEvento.SOLICITUD_CIERRE, "/v1/paystore_terminals/terminal_settlements", "/settlements", "cuit_cuil=" + xModel.Cuit_cuil + "&subnet_acquirer_id=" + sRequestCierre.subnet_acquirer_id + "&terminal_id=" + xModel.Terminal +"&print_receipt=" + sRequestCierre.print_receipt, new object(), sRequestCierre);
         }
 
         private void EnviarConsultaEstadoCierre(ResponseCierre xModel)
         {
+            Thread.Sleep(500);
+
             int sSegundosPersistencia = _configuracion.Tiempo_segundos_persistencias == 0 ? _tiempoSegundosPersistenciaDefault : _configuracion.Tiempo_segundos_persistencias;
 
-            //Reversal_data sReversalData = xModel.reversal_data;
-
-            ConsultaEstado sConsultaEstado = new ConsultaEstado();
-            sConsultaEstado.Referencia = xModel.refund_request.subnet_acquirer_id;
-            sConsultaEstado.Cuit_cuil = xModel.Parametro_original.Cuit_cuil;
-
-            EnviarConsultaEstadoService<ResponseDevolucion, ResponseConsultaDevolucion>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_DEVOLUCION, "/refunds/" + xModel.refund_data.refund_id, "subnet_acquirer_id=" + sConsultaEstado.Referencia + "&cuit_cuil=" + sConsultaEstado.Cuit_cuil, xModel);
+            EnviarConsultaEstadoService<ResponseCierre, ResponseCierre>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_CIERRE, "/v1/paystore_terminals/terminal_settlements", "/settlements/" + xModel.settlements_data.settlement_id, "subnet_acquirer_id=" + xModel.settlements_data.subnet_acquirer_id + "&cuit_cuil=" + xModel.Parametro_original.Cuit_cuil, xModel);
         }
 
         //public async Task GenerarToken()

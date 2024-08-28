@@ -11,5 +11,7 @@ namespace Pagos.Pasarela
     public interface IAutenticacion
     {
         void RenovarToken();
+
+        //async Task<string> RenovarTokenSync();
     }
 }

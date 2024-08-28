@@ -61,11 +61,22 @@ namespace Pagos.Pasarela
 
         }
 
+        public void ActualizarModoOperacion()
+        {
+            OperatingMode sOperatingMode = new OperatingMode();
+            sOperatingMode.operating_mode = "PDV";
+            
+            string sEndPoint = "/devices/PAX_A910__SMARTPOS1495000780";
+
+            ActualizarModoOperacionService<OperatingMode, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sOperatingMode);
+        }
+
         public void EnviarSolicitudPago(SolicitudPago xModel)
         {
             //Dispositivos();
             //RenovarToken();
             //BuscarCajas();
+            //ActualizarModoOperacion();
 
             if (SolicitudEnProceso)
             {
@@ -77,7 +88,7 @@ namespace Pagos.Pasarela
 
             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
             {
-                RequestPagoQrMin sRequestPago = new RequestPagoQrMin();
+                RequestPagoQr sRequestPago = new RequestPagoQr();
                 sRequestPago.external_reference = xModel.Referencia;
                 sRequestPago.total_amount = xModel.Importe;
                 sRequestPago.title = xModel.Titulo;
@@ -92,16 +103,28 @@ namespace Pagos.Pasarela
                     sRequestPago.items.Add(new Item() { sku_number = sItem.Codigo, category = sItem.Categoria, title = sItem.Titulo, description = sItem.Descripcion, unit_price = sItem.Precio_unitario, quantity = sItem.Cantidad, unit_measure = "unit", total_amount = sItem.Total });
                 }
 
+                sRequestPago.Parametro_original = xModel;
+
+                RequestPagoQrMin sRequestPagoMin = new RequestPagoQrMin();
+                sRequestPagoMin.external_reference = xModel.Referencia;
+                sRequestPagoMin.total_amount = xModel.Importe;
+                sRequestPagoMin.title = xModel.Titulo;
+                sRequestPagoMin.description = xModel.Texto_terminal;
+                sRequestPagoMin.items = new List<Item>();
+                sRequestPagoMin.items = sRequestPago.items;
+
                 string sEndPoint = _configuracion.User_id + "/stores/" + _configuracion.Sucursal + "/pos/" + _configuracion.Pos + "/orders";
 
                 //EnviarSolicitudService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago);
-                ActualizarSolicitudService<RequestPagoQrMin, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago, xModel);
+                ActualizarSolicitudService<RequestPagoQrMin, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPagoMin, sRequestPago);
             }
             else
             {
                 RequestPagoPoint sRequestPago = new RequestPagoPoint();
                 sRequestPago.additional_info = new AdicionalInfo();
                 sRequestPago.additional_info.ticket_number = xModel.Referencia;
+                sRequestPago.additional_info.external_reference = "";
+                sRequestPago.additional_info.print_on_terminal = true;
 
                 sRequestPago.deviceId = "";
 
@@ -121,7 +144,11 @@ namespace Pagos.Pasarela
 
                 string sEndPoint = "/devices/" + sRequestPago.deviceId + "/payment-intents";
 
-                EnviarSolicitudService<RequestPagoPoint, ResponsePagoPoint>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPago);
+                RequestPagoPointMin sRequestPagoMin = new RequestPagoPointMin();
+                sRequestPagoMin.amount = sRequestPago.amount;
+                sRequestPagoMin.additional_info = sRequestPago.additional_info;
+
+                EnviarSolicitudService<RequestPagoPointMin, ResponsePagoPoint>(CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sEndPoint, "", sRequestPagoMin, sRequestPago);
             }
         }
 
@@ -182,12 +209,12 @@ namespace Pagos.Pasarela
 
         public void Dispositivos()
         {
-            //API METODO PARA RENOVAR TOKEN
-            GenerarToken<object>(ClientApiEntity.TipeAuthorization.Bearer, "", "/devices", "", new object(), CommonPago.TipoRespuestaEvento.TOKEN);
-             
+            GenerarToken<object>(ClientApiEntity.TipeAuthorization.Bearer, _configuracion.Sub_end_point, "/devices", "", new object(), CommonPago.TipoRespuestaEvento.TOKEN);
+            //GenerarToken<object>(ClientApiEntity.TipeAuthorization.Bearer, _configuracion.Sub_end_point, "/integrator", "", new object(), CommonPago.TipoRespuestaEvento.TOKEN);
+
         }
 
-        private void EnviarConsultaEstadoPagoQr(SolicitudPago xModel)
+        private void EnviarConsultaEstadoPagoQr(RequestPagoQr xModel)
         {
             if (_solicitudEliminada)
             {
@@ -205,11 +232,12 @@ namespace Pagos.Pasarela
                 return;
             }
 
-            //string sEndPoint = "/" + _configuracion.User_id + "/pos/" + _configuracion.Pos + "/orders";
-            string sEndPoint = "/merchant_orders";
-            string sParam = "access_token=" + Token + "&external_reference=" + xModel.Referencia;
+            string sEndPoint = "/" + _configuracion.User_id + "/pos/" + _configuracion.Pos + "/orders";
+            //string sEndPoint = "/merchant_orders";
+            //string sParam = "access_token=" + Token + "&external_reference=" + xModel.Referencia;
 
-            EnviarConsultaEstadoService<SolicitudPago, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "", sEndPoint, sParam, xModel);
+            //EnviarConsultaEstadoService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "", sEndPoint, sParam, xModel);
+            EnviarConsultaEstadoService<RequestPagoQr, ResponsePagoQr>(CommonPago.TipoRespuestaEvento.CONSULTA_ESTADO_PAGO, "", sEndPoint, xModel);
         }
 
         private void EnviarConsultaEstadoPagoPoint(RequestPagoPoint xModel)
@@ -296,7 +324,7 @@ namespace Pagos.Pasarela
                             {
                                 _requestPagoQr = (RequestPagoQr)e.ParametroOriginal;
 
-                                EnviarSolicitudPago((SolicitudPago)e.ParametroOriginal);
+                                EnviarSolicitudPago(((RequestPagoQr)e.ParametroOriginal).Parametro_original);
                             }
                             
                             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -313,7 +341,7 @@ namespace Pagos.Pasarela
 
                             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
                             {
-                                EnviarConsultaEstadoPagoQr((SolicitudPago)e.ParametroOriginal);
+                                EnviarConsultaEstadoPagoQr((RequestPagoQr)e.ParametroOriginal);
                             }
 
                             if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -358,15 +386,15 @@ namespace Pagos.Pasarela
                     if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.QR)
                     {                        
                         ResponsePagoQr sRespuestaSolicitudPago = (ResponsePagoQr)e.Respuesta;
-                        SolicitudPago sParametroOriginalSolicitudPago = (SolicitudPago)e.ParametroOriginal;
-                        sParametroOriginalSolicitudPago.Nro_intento_generacion_token++;
+                        RequestPagoQr sParametroOriginalSolicitudPago = (RequestPagoQr)e.ParametroOriginal;
+                        sParametroOriginalSolicitudPago.Parametro_original.Nro_intento_generacion_token++;
 
-                        //if (sRespuestaSolicitudPago.status.ContainValueString())
-                        //{
-                        //    Errores<SolicitudPago>(sRespuestaSolicitudPago.status, CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sParametroOriginalSolicitudPago, 0);
-                        //}
-                        //else
-                        //{
+                        if (sRespuestaSolicitudPago.status.ContainValueString())
+                        {
+                            Errores<RequestPagoQr>(sRespuestaSolicitudPago.status, CommonPago.TipoRespuestaEvento.SOLICITUD_PAGO, sParametroOriginalSolicitudPago, sParametroOriginalSolicitudPago.Parametro_original.Nro_intento_generacion_token);
+                        }
+                        else
+                        {
                             OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.SOLICITUD_ENVIADA, "Solicitud enviada con exito", ""));
 
                             SolicitudEnProceso = false;
@@ -377,7 +405,7 @@ namespace Pagos.Pasarela
                             ConsultaEstadoEnProceso = true;
 
                             EnviarConsultaEstadoPagoQr(sParametroOriginalSolicitudPago);
-                        //}
+                        }
                     }
 
                     if (_configuracion.Tipo_integracion == CommonPago.TipoIntegracion.POINT)
@@ -439,8 +467,8 @@ namespace Pagos.Pasarela
 
                         OnRespuesta(this, new RespuestaExternaEventArgs(CommonPago.TipoRespuestaExternaEvento.ESTADO_PAGO, sEstado));
 
-                        if(!sEstado.Equals("Cerrado"))
-                            EnviarConsultaEstadoPagoQr(sParametroOriginalSolicitudPago);
+                        //if(!sEstado.Equals("Cerrado"))
+                            //EnviarConsultaEstadoPagoQr(sParametroOriginalSolicitudPago);
                         //}
                     }
 
@@ -578,6 +606,26 @@ namespace Pagos.Pasarela
         }
 
         public void EnviarCancelacionDevolucion()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EnviarSolicitudCierre(SolicitudCierre xModel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EnviarCancelacionPago(Cancelacion xModel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EnviarCancelacionReversion(Cancelacion xModel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EnviarCancelacionDevolucion(Cancelacion xModel)
         {
             throw new NotImplementedException();
         }

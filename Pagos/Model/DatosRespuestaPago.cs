@@ -19,6 +19,11 @@ namespace Pagos
         /// </summary>
         public string Tarjeta { get; set; }
 
+        /// <summary>
+        /// DEBIT, CREDIT
+        /// </summary>
+        public string Tipo_tarjeta { get; set; }
+
         public string Nro_terminal { get; set; }
     }
 }

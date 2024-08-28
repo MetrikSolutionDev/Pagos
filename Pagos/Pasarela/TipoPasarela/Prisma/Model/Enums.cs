@@ -67,6 +67,15 @@ namespace Pagos.Pasarela.PrismaModel
             UNDO_REVERSAL_DECLINED
         }
 
+        public enum SettlemnetsStatus
+        {
+            SETTLEMENT_REQUEST,
+            PROCESSING_SETTLEMENT,
+            CONFIRMED,
+            DECLINED,
+            ERROR
+        }
+
         public enum Acquirer
         {
             PRISMA,

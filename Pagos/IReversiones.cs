@@ -21,5 +21,7 @@ namespace Pagos
         /// Cancela la intencion de reversion
         /// </summary>
         void EnviarCancelacionReversion();
+
+        void EnviarCancelacionReversion(Cancelacion xModel);
     }
 }

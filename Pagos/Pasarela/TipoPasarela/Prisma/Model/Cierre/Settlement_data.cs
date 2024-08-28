@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pagos.Pasarela.PrismaModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,7 +23,7 @@ namespace Pagos.Pasarela.TipoPasarela.Prisma.Model.Cierre
 
         public string subnet_acquirer_id { get; set; }
 
-        public string settlement_status { get; set; }
+        public Enums.SettlemnetsStatus settlement_status { get; set; }
 
         public string settlement_status_date { get; set; }
 

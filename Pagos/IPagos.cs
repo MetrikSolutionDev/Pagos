@@ -22,6 +22,8 @@ namespace Pagos
         /// </summary>
         void EnviarCancelacionPago();
 
+        void EnviarCancelacionPago(Cancelacion xModel);
+
         //void CreateSucursal(SucursalPos xModel);
 
         //void CreatePos(SucursalPos xModel);

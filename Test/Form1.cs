@@ -55,6 +55,7 @@ namespace Test
                 DatosRespuestaPago sDatosRespuestaPago = e.DatosRespuestaPago;
             }
 
+
             if(e.Error)
                 lblTest.Text = "ERROR: " + e.Mensaje;
 
@@ -95,14 +96,35 @@ namespace Test
 
 
 
-            //Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.MERCADO_PAGO };
-            //sConfiguracion.Id_terminales = new List<string>();
-            //sConfiguracion.Id_terminales.Add("2AB7X-CHIPPERBT");
-            //sConfiguracion.End_point = "https://api.mercadopago.com";
-            //sConfiguracion.Sub_end_point = "/instore/qr/seller/collectors";
-            //sConfiguracion.Sub_end_point_authorization = "/oauth/token";
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.MERCADO_PAGO };
+            sConfiguracion.Id_terminales = new List<string>();
+            sConfiguracion.Id_terminales.Add("SMARTPOS1495000780");
+            sConfiguracion.End_point = "https://api.mercadopago.com";
+            sConfiguracion.Sub_end_point = "/instore/qr/seller/collectors";
+            //sConfiguracion.Sub_end_point = "/point/integration-api";
+            sConfiguracion.Sub_end_point_authorization = "/oauth/token";
 
-            ////datos de usuario prueba vendedor 1
+            //datos de usuario prueba vendedor 1
+            //sConfiguracion.Key = "APP_USR-5188075196018449-080710-bee98d20a56bba3893fd625cffd71bd6-1934027353";
+            //sConfiguracion.Client_id = "5188075196018449";
+            //sConfiguracion.Client_secret = "Q1hAeg5DGAYSeUh3qjR4aOO7WbTh98Dq";
+            //sConfiguracion.Code = "";
+            //sConfiguracion.User_id = "1360534504";
+            //sConfiguracion.Tipo_integracion = CommonPago.TipoIntegracion.POINT;
+            //sConfiguracion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+            //sConfiguracion.Token = "APP_USR-5188075196018449-080812-9f84a502fa076a3f2bdfb35151ba428e-1934027353";
+
+            //datos usuario macjey
+            sConfiguracion.Key = "APP_USR-4917698465100135-080813-08416c3ee542e95771837aa276eec465-45454237";
+            sConfiguracion.Client_id = "4917698465100135";
+            sConfiguracion.Client_secret = "WJ7BJQipqt7NrRsTjJnQ7qxHokQP0epf";
+            sConfiguracion.Code = "";
+            sConfiguracion.User_id = "45454237";
+            sConfiguracion.Tipo_integracion = CommonPago.TipoIntegracion.QR;
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+            sConfiguracion.Token = "APP_USR-4917698465100135-080814-b0342429f6527e5d407fd6422ca00dcb-45454237";
+
+            //datos usuario ezequiel fortunato
             //sConfiguracion.Key = "APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504";
             //sConfiguracion.Client_id = "7492718820250327";
             //sConfiguracion.Client_secret = "GdTDSZeNcjnQlSpiIZ818HAXSLZrYUeO";
@@ -112,81 +134,87 @@ namespace Test
             //sConfiguracion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
             //sConfiguracion.Token = "APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504";
 
-            ////datos usuario ezequiel fortunato
-            ////sConfiguracion.Key = "APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504";
-            ////sConfiguracion.Client_id = "7492718820250327";
-            ////sConfiguracion.Client_secret = "GdTDSZeNcjnQlSpiIZ818HAXSLZrYUeO";
-            ////sConfiguracion.Code = "";
-            ////sConfiguracion.User_id = "1360534504";
-            ////sConfiguracion.Tipo_integracion = CommonPago.TipoIntegracion.QR;
-            ////sConfiguracion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
-            ////sConfiguracion.Token = "APP_USR-7492718820250327-051810-2942febbda71ef7022e5c2c739ad4f97-1360534504";
-            //sConfiguracion.Sucursal = "SUC03";
-            //sConfiguracion.Pos = "POS003";
-            //sConfiguracion.Tiempo_segundos_persistencias = 500;
-
-            //sPago = new Pago(sConfiguracion);
-
-            //sPago.OnRespuesta += Respuesta;
-
-            ////sRequestPago.items.Add(new Item() { sku_number = "00001-555588", category = "marketplace", title = "Point Mini", description = "test", unit_price = 50, quantity = 1, unit_measure = "unit", total_amount = 50 });
-
-            //SolicitudPago sSolicitudPago = new SolicitudPago()
-            //{
-            //    Cuit_cuil = "20341465681",
-            //    //Sucursal = "SUC001_EI",
-            //    //Pos = "SUC001POS001",
-            //    Importe = 85,
-            //    Nombre_integrador = "MS3",
-            //    Nombre_sistema_integrador = "MS3 POS",
-            //    Version_sistema_integrador = "1.0.0",
-            //    Texto_terminal = "",
-            //    Referencia = "23",
-            //    Titulo = "Titulo"
-            //};
-
-            //sSolicitudPago.Items = new List<Items>();
-            //sSolicitudPago.Items.Add(new Items() { Codigo = "00001-555588", Categoria = "marketplace", Titulo = "Point Mini", Descripcion = "test", Precio_unitario = 85, Cantidad = 1, Unidad_medida = "unit", Total = 85 });
-
-            //sPago.EnviarSolicitudPago(sSolicitudPago);
-
-            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
-            sConfiguracion.Id_terminales = new List<string>();
-            sConfiguracion.Id_terminales.Add("asd123");
-            sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
-            sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_payments";
-            sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
-            sConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
-            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            sConfiguracion.Sucursal = "63740932";
+            //sConfiguracion.Pos = "103085572";
+            //sConfiguracion.Sucursal = "Local";
+            sConfiguracion.Pos = "103089642";
             sConfiguracion.Tiempo_segundos_persistencias = 500;
-            //sConfiguracion.Key = "";
 
             sPago = new Pago(sConfiguracion);
 
             sPago.OnRespuesta += Respuesta;
 
+            //sRequestPago.items.Add(new Item() { sku_number = "00001-555588", category = "marketplace", title = "Point Mini", description = "test", unit_price = 50, quantity = 1, unit_measure = "unit", total_amount = 50 });
+
             SolicitudPago sSolicitudPago = new SolicitudPago()
             {
-                Cuit_cuil = "20-34146568-1",
-                Importe = 120000,
-                Nombre_integrador = "ECR",
-                Nombre_sistema_integrador = "Software x",
-                Version_sistema_integrador = "3.5",
-                Texto_terminal = "Pago x 17",
-                Referencia = "987654",
-                Cuotas = 1,
-                Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
-                Nota_impresion_ticket = "nota impresa en el ticket",
-                Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
-                Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
-                Admite_tarjeta_beneficio = true
+                Cuit_cuil = "20341465681",
+                //Sucursal = "SUC001_EI",
+                //Pos = "SUC001POS001",
+                Importe = 8000,
+                Nombre_integrador = "MS3",
+                Nombre_sistema_integrador = "MS3 POS",
+                Version_sistema_integrador = "1.0.0",
+                Texto_terminal = "",
+                Referencia = "23",
+                Titulo = "Titulo"
             };
 
             sSolicitudPago.Lista_terminales = new List<string>();
             //sSolicitudPago.Lista_terminales.Add("38011127");
-            sSolicitudPago.Lista_terminales.Add("38011128");
+            sSolicitudPago.Lista_terminales.Add("PAX_A910__SMARTPOS1495000780");
+
+            sSolicitudPago.Items = new List<Items>();
+            sSolicitudPago.Items.Add(new Items() { Codigo = "00001-555588", Categoria = "marketplace", Titulo = "Point Mini", Descripcion = "test", Precio_unitario = 8000, Cantidad = 1, Unidad_medida = "unit", Total = 8000 });
 
             sPago.EnviarSolicitudPago(sSolicitudPago);
+
+
+
+
+
+
+
+            //IPagos sPago;
+
+            //Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            //sConfiguracion.Id_terminales = new List<string>();
+            //sConfiguracion.Id_terminales.Add("asd123");
+            ////sConfiguracion.End_point = "https://api.prismamediosdepago.com";
+            ////sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_payments";
+            ////sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            ////sConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
+            //sConfiguracion.Entorno = CommonPago.TipoEntorno.PRODUCCION;
+            ////sConfiguracion.Tiempo_segundos_persistencias = 500;
+            ////sConfiguracion.Key = "";
+
+            //sPago = new Pago(sConfiguracion);
+
+            //sPago.OnRespuesta += Respuesta;
+
+            //SolicitudPago sSolicitudPago = new SolicitudPago()
+            //{
+            //    Cuit_cuil = "30-71267720-8",
+            //    Importe = 120000,
+            //    Nombre_integrador = "ECR",
+            //    Nombre_sistema_integrador = "Software x",
+            //    Version_sistema_integrador = "3.5",
+            //    Texto_terminal = "Pago x 49",
+            //    Referencia = "987654",
+            //    Cuotas = 1,
+            //    Copias_comprobante_pago = CommonPago.CopiasComprobantePago.NINGUNO,
+            //    Nota_impresion_ticket = "nota impresa en el ticket",
+            //    Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
+            //    Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
+            //    Admite_tarjeta_beneficio = true
+            //};
+
+            //sSolicitudPago.Lista_terminales = new List<string>();
+            ////sSolicitudPago.Lista_terminales.Add("38011127");
+            //sSolicitudPago.Lista_terminales.Add("16363634");
+
+
+            //sPago.EnviarSolicitudPago(sSolicitudPago);
 
             //IReversiones sReversion = new Pago(sConfiguracion);
 
@@ -302,7 +330,7 @@ namespace Test
                 Nombre_integrador = "ECR",
                 Nombre_sistema_integrador = "Software x",
                 Version_sistema_integrador = "3.5",
-                Texto_terminal = "Pago reverso x 18",
+                Texto_terminal = "Pago reverso x 49",
                 Referencia = "987654",
                 Cuotas = 1,
                 Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
@@ -310,7 +338,7 @@ namespace Test
                 Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
                 Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
                 Admite_tarjeta_beneficio = true,
-                Pago_id = "4934ba4e-d375-4848-b73b-9501286cc0d4"
+                Pago_id = "e5a4488a-5868-4fd2-8c45-b065fa80d536"
             };
 
             sSolicitudReversion.Lista_terminales = new List<string>();
@@ -349,19 +377,19 @@ namespace Test
                 Nombre_integrador = "ECR",
                 Nombre_sistema_integrador = "Software x",
                 Version_sistema_integrador = "3.5",
-                Texto_terminal = "Pago devolucion x 26",
-                Referencia = "987654",
-                Cuotas = 1,
+                Texto_terminal = "Pago devolucion x 31",
+                //Referencia = "987654",
+                //Cuotas = 1,
                 Copias_comprobante_pago = CommonPago.CopiasComprobantePago.SOLO_CLIENTE,
-                Nota_impresion_ticket = "nota impresa en el ticket",
-                Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
-                Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
-                Admite_tarjeta_beneficio = true,
-                Pago_id = "4934ba4e-d375-4848-b73b-9501286cc0d4"
+                //Nota_impresion_ticket = "nota impresa en el ticket",
+                //Metodo_operacion = CommonPago.MetodoOperacion.TARJETA,
+                //Metodo_impresion = CommonPago.MetodoImpresion.NO_FISCAL,
+                //Admite_tarjeta_beneficio = true,
+                //Pago_id = "4934ba4e-d375-4848-b73b-9501286cc0d4"
             };
 
             sSolicitudDevolucion.Lista_terminales = new List<string>();
-            sSolicitudDevolucion.Lista_terminales.Add("38011128");
+            sSolicitudDevolucion.Lista_terminales.Add("38011127");
 
             sDevolucion.EnviarSolicitudDevolucion(sSolicitudDevolucion);
         }
@@ -369,6 +397,63 @@ namespace Test
         private void button9_Click(object sender, EventArgs e)
         {
             sDevolucion.EnviarCancelacionDevolucion();
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            ICierres sCierre;
+
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            sConfiguracion.Id_terminales = new List<string>();
+            sConfiguracion.Id_terminales.Add("asd123");
+            sConfiguracion.End_point = "https://api-homo.prismamediosdepago.com";
+            sConfiguracion.Sub_end_point = "/v1/paystore_terminals/terminal_settlements";
+            sConfiguracion.Sub_end_point_authorization = "/v1/oauth/accesstoken";
+            sConfiguracion.Key = "YTczNjhmZWYtMTM0ZS00ZGZlLWI0YzgtMDNmMjkxMjBkNWZlOmNhYmZjM2EzLTRhNWEtNGZiNi1iNjhlLTFjMDhiNjczZGY0Mw==";
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            sConfiguracion.Tiempo_segundos_persistencias = 500;
+            //sConfiguracion.Key = "";
+
+            sCierre = new Pago(sConfiguracion);
+
+            sCierre.OnRespuesta += Respuesta;
+
+            SolicitudCierre sSolicitudCierre = new SolicitudCierre()
+            {
+                Cuit_cuil = "20-34146568-1",
+                Terminal = "38011128",
+                Imprimir_comprobante = true
+            };
+
+            sCierre.EnviarSolicitudCierre(sSolicitudCierre);
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            IPagos sPago;
+
+            Configuracion sConfiguracion = new Configuracion() { Tipo = Pagos.CommonPago.Tipo.PRISMA };
+            sConfiguracion.Id_terminales = new List<string>();
+            sConfiguracion.Id_terminales.Add("asd123");
+            sConfiguracion.Entorno = CommonPago.TipoEntorno.HOMOLOGACION;
+            
+            sPago = new Pago(sConfiguracion);
+
+            sPago.OnRespuesta += Respuesta;
+
+            Cancelacion sCancelacionPago = new Cancelacion()
+            {
+                Cuit_cuil = "20-34146568-1",
+                Entorno = CommonPago.TipoEntorno.HOMOLOGACION,
+                Pago_id = "eb418c2a-064d-426e-a133-cbfdaa865e8a"
+            };
+
+            sPago.EnviarCancelacionPago(sCancelacionPago);
         }
     }
 }

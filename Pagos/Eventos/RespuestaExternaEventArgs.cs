@@ -16,8 +16,10 @@ namespace Pagos
         private string _mensaje;
         private string _info;
         private bool _error;
+        private bool _procesoConsultaActivo;
         private DatosRespuestaPago _datosRespuestaPago;
         private bool _pagoConfirmado;
+        private bool _cancelacion;
 
         public TipoRespuestaExternaEvento TipoRespuesta
         {
@@ -55,6 +57,18 @@ namespace Pagos
             set { _error = value; }
         }
 
+        public bool ProcesoConsultaActivo
+        {
+            get { return _procesoConsultaActivo; }
+            set { _procesoConsultaActivo = value; }
+        }
+
+        public bool Cancelacion
+        {
+            get { return _cancelacion; }
+            set { _cancelacion = value; }
+        }
+
         public bool PagoConfirmado
         {
             get { return _pagoConfirmado; }
@@ -84,12 +98,48 @@ namespace Pagos
             _error = xError;
         }
 
+        public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje, bool xError, bool xProcesoConsultaActivo)
+        {
+            _tipo = xTipo;
+            _mensaje = xMensaje;
+            _error = xError;
+            _procesoConsultaActivo = xProcesoConsultaActivo;
+        }
+
+        public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje, bool xError, bool xProcesoConsultaActivo, bool xCancelacion)
+        {
+            _tipo = xTipo;
+            _mensaje = xMensaje;
+            _error = xError;
+            _procesoConsultaActivo = xProcesoConsultaActivo;
+            _cancelacion = xCancelacion;
+        }
+
+        public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje, bool xError, bool xProcesoConsultaActivo, bool xCancelacion, bool xPagoConfirmado)
+        {
+            _tipo = xTipo;
+            _mensaje = xMensaje;
+            _error = xError;
+            _procesoConsultaActivo = xProcesoConsultaActivo;
+            _cancelacion = xCancelacion;
+            _pagoConfirmado = xPagoConfirmado;
+        }
+
         public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje, DatosRespuestaPago xDatosRespuestaPago)
         {
             _tipo = xTipo;
             _mensaje = xMensaje;
             _datosRespuestaPago = xDatosRespuestaPago;
             _pagoConfirmado = true;
+        }
+
+        public RespuestaExternaEventArgs(TipoRespuestaExternaEvento xTipo, string xMensaje, DatosRespuestaPago xDatosRespuestaPago, bool xProcesoConsultaActivo)
+        {
+            _tipo = xTipo;
+            _mensaje = xMensaje;
+            _datosRespuestaPago = xDatosRespuestaPago;
+            _pagoConfirmado = true;
+            _procesoConsultaActivo = xProcesoConsultaActivo;
         }
     }
 }

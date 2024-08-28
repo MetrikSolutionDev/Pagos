@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -49,10 +50,14 @@
     <Compile Include="Eventos\RespuestaExternaEventArgs.cs" />
     <Compile Include="IPagoEvento.cs" />
     <Compile Include="IDevoluciones.cs" />
+    <Compile Include="ICierres.cs" />
     <Compile Include="Model\DatosRespuesta.cs" />
     <Compile Include="Model\DatosRespuestaPago.cs" />
+    <Compile Include="Model\EquivalenciaTarjeta.cs" />
     <Compile Include="Model\Items.cs" />
+    <Compile Include="Model\SolicitudCierre.cs" />
     <Compile Include="Model\SolicitudDevolucion.cs" />
+    <Compile Include="Model\Cancelacion.cs" />
     <Compile Include="Model\SucursalPos.cs" />
     <Compile Include="Model\SolicitudReversion.cs" />
     <Compile Include="Pasarela\Eventos\RespuestaPagoEventArgs.cs" />
@@ -70,6 +75,7 @@
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\MercadoPago.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\Errores.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\AdicionalInfo.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoPointMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoQrMin.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\ResponsePagoPoint.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoPoint.cs" />
@@ -83,6 +89,7 @@
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Pago\RequestPagoQr.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Reversion\RequestReversion.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\Location.cs" />
+    <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\OperatingMode.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\SucursalRequest.cs" />
     <Compile Include="Pasarela\TipoPasarela\MercadoPago\Model\TokenRequest.cs" />
     <Compile Include="Model\SucursalResponse.cs" />
@@ -90,6 +97,9 @@
     <Compile Include="Pasarela\TipoPasarela\PagoBase.cs" />
     <Compile Include="Pago.cs" />
     <Compile Include="Pasarela\TipoPasarela\PagoFactory.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Cierre\ResponseCierre.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Cierre\RequestCierre.cs" />
+    <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Cierre\Settlement_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\Refund_data.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\ResponseConsultaDevolucion.cs" />
     <Compile Include="Pasarela\TipoPasarela\Prisma\Model\Devolucion\ResponseDevolucion.cs" />

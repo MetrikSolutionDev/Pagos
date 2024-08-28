@@ -1,12 +1,5 @@
-E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.AssemblyReference.cache
-E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.CoreCompileInputs.cache
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Pagos.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Pagos.pdb
-E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.dll
-E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.pdb
-E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Newtonsoft.Json.dll
-E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Newtonsoft.Json.xml
-E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.CopyComplete
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Core.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Npgsql.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Oracle.ManagedDataAccess.dll
@@ -14,6 +7,7 @@ E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\MySql.Data.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\ClosedXML.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\System.Web.Http.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\System.Net.Http.Formatting.dll
+E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Newtonsoft.Json.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\System.Threading.Tasks.Extensions.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\ExcelNumberFormat.dll
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Core.pdb
@@ -23,5 +17,11 @@ E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\ClosedXML.pdb
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\ClosedXML.xml
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\System.Web.Http.xml
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\System.Net.Http.Formatting.xml
+E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\Newtonsoft.Json.xml
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\System.Threading.Tasks.Extensions.xml
 E:\Eze\Fuentes\Pagos\Pagos\bin\Debug\ExcelNumberFormat.xml
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.AssemblyReference.cache
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.CoreCompileInputs.cache
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.csproj.CopyComplete
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.dll
+E:\Eze\Fuentes\Pagos\Pagos\obj\Debug\Pagos.pdb

@@ -21,6 +21,8 @@ namespace Pagos.Pasarela.PrismaModel
 
         public string payment_status_date { get; set; }
 
+        public string payment_type { get; set; }
+
         public string merchant_id { get; set; }
 
         public string merchant_name { get; set; }
